@@ -55,28 +55,33 @@ def scrape_oilprice():
     return headlines
 
 
-def scrape_reuters():
+def scrape_cnbc():
     headlines = []
-    try:
-        url = "https://www.cnbc.com/id/10000664/device/rss/rss.html"
-        response = requests.get(url, headers=HEADERS, timeout=10)
-        soup = BeautifulSoup(response.text, "xml")
-        items = soup.find_all("item")[:10]
-        for item in items:
-            title = item.find("title")
-            if title:
-                text = title.get_text(strip=True)
-                if len(text) > 20:
-                    headlines.append(
-                        {
-                            "source": "cnbc",
-                            "headline": text,
-                            "assets": ["gold", "silver", "oil", "asx200"],
-                            "scraped_at": datetime.utcnow().isoformat(),
-                        }
-                    )
-    except Exception as e:
-        print(f"Reuters scrape error: {e}")
+    urls = [
+        "https://www.cnbc.com/id/10000664/device/rss/rss.html",
+        "https://www.cnbc.com/id/20409666/device/rss/rss.html",
+        "https://www.cnbc.com/id/20910258/device/rss/rss.html",
+    ]
+    for url in urls:
+        try:
+            response = requests.get(url, headers=HEADERS, timeout=10)
+            soup = BeautifulSoup(response.text, "xml")
+            items = soup.find_all("item")[:10]
+            for item in items:
+                title = item.find("title")
+                if title:
+                    text = title.get_text(strip=True)
+                    if len(text) > 20:
+                        headlines.append(
+                            {
+                                "source": "cnbc",
+                                "headline": text,
+                                "assets": ["gold", "silver", "oil", "asx200"],
+                                "scraped_at": datetime.utcnow().isoformat(),
+                            }
+                        )
+        except Exception as e:
+            print(f"CNBC scrape error ({url}): {e}")
     return headlines
 
 
@@ -109,7 +114,7 @@ def scrape_all():
     all_headlines = []
     all_headlines.extend(scrape_kitco())
     all_headlines.extend(scrape_oilprice())
-    all_headlines.extend(scrape_reuters())
+    all_headlines.extend(scrape_cnbc())
     all_headlines.extend(scrape_bbc())
     print(f"Total headlines scraped: {len(all_headlines)}")
     return all_headlines
