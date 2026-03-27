@@ -15,7 +15,9 @@ from database.writer import (
     save_asset_prices,
     save_headlines_and_sentiment,
     save_sentiment_summary,
+    save_volatility_scores,
 )
+from aggregator.aggregator import run_aggregator
 from datetime import datetime
 
 
@@ -68,6 +70,11 @@ def run_full_pipeline():
     # Save to database
     save_headlines_and_sentiment(all_results)
     save_sentiment_summary(asset_sentiments)
+
+    # Step 5 — Run aggregator and save volatility scores
+    print("\n[5/5] Running aggregator...")
+    volatility_scores = run_aggregator()
+    save_volatility_scores(volatility_scores)
 
     # Print summary
     print(f"\n{'='*60}")
