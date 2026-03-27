@@ -1,13 +1,23 @@
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from agents.stocks.price_agent import fetch_historical_prices
 from agents.news.scraper import scrape_all
 from agents.news.sentiment_agent import analyse_sentiment
-from agents.news.relevance_combined import combined_relevance, filter_relevant_headlines
-from database.writer import save_asset_prices, save_headlines_and_sentiment, save_sentiment_summary
+from agents.news.relevance_combined import filter_relevant_headlines
+from agents.banking.rba_agent import run_rba_agent
+from agents.banking.worldbank_agent import run_worldbank_agent
+from agents.commodities.kitco_agent import run_kitco_agent
+from agents.oil.oil_agent import run_oil_agent
+from database.writer import (
+    save_asset_prices,
+    save_headlines_and_sentiment,
+    save_sentiment_summary,
+)
 from datetime import datetime
+
 
 def run_full_pipeline():
     print(f"\n{'='*60}")
@@ -19,43 +29,44 @@ def run_full_pipeline():
     prices = fetch_historical_prices()
     save_asset_prices(prices)
 
-    # Step 2 — Scrape headlines
-    print("\n[2/4] Scraping headlines...")
+    # Step 2 — Run all specialist agents
+    print("\n[2/4] Running specialist agents...")
+    all_results = []
+    all_results.extend(run_rba_agent())
+    all_results.extend(run_worldbank_agent())
+    all_results.extend(run_kitco_agent())
+    all_results.extend(run_oil_agent())
+
+    # Step 3 — Scrape and process general news
+    print("\n[3/4] Scraping general news...")
     headlines = scrape_all()
-    print(f"Scraped {len(headlines)} headlines")
-
-    # Step 3 — Score relevance
-    print("\n[3/4] Scoring relevance...")
     scored_headlines = filter_relevant_headlines(headlines)
-    print(f"Relevant headlines after filtering: {len(scored_headlines)}")
-
-    # Step 4 — Run sentiment analysis
-    print("\n[4/4] Running sentiment analysis...")
     texts = [h["headline"] for h in scored_headlines]
     sentiments = analyse_sentiment(texts)
-
-    # Merge sentiment into headlines
-    results = []
-    asset_sentiments = {}
-
     for i, headline in enumerate(scored_headlines):
         headline["sentiment"] = sentiments[i]["sentiment"]
         headline["scores"] = sentiments[i]["scores"]
-        results.append(headline)
+    all_results.extend(scored_headlines)
+    print(f"Total signals across all agents: {len(all_results)}")
 
+    # Step 4 — Build asset sentiment summary from all_results
+    print("\n[4/4] Building sentiment summary...")
+    asset_sentiments = {}
+    for headline in all_results:
         for asset in headline.get("relevant_assets", []):
             if asset not in asset_sentiments:
                 asset_sentiments[asset] = {
                     "positive": 0,
                     "negative": 0,
                     "neutral": 0,
-                    "total": 0
+                    "total": 0,
                 }
-            asset_sentiments[asset][headline["sentiment"]] += 1
+            sentiment = headline.get("sentiment", "neutral")
+            asset_sentiments[asset][sentiment] += 1
             asset_sentiments[asset]["total"] += 1
 
     # Save to database
-    save_headlines_and_sentiment(results)
+    save_headlines_and_sentiment(all_results)
     save_sentiment_summary(asset_sentiments)
 
     # Print summary
@@ -72,7 +83,8 @@ def run_full_pipeline():
         print(f"  Positive: {pos}% | Negative: {neg}% | Neutral: {neu}%")
         print(f"  Dominant: {dominant.upper()}")
 
-    return results, asset_sentiments
+    return all_results, asset_sentiments
+
 
 if __name__ == "__main__":
     run_full_pipeline()
