@@ -8,7 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from database.connection import SessionLocal
 from aggregator.aggregator import run_aggregator
-from datetime import datetime, timedelta
+from datetime import datetime
+import yfinance as yf
 
 app = FastAPI(
     title="Market Intelligence System",
@@ -38,6 +39,23 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
+
+
+@app.get("/exchange-rate")
+def get_exchange_rate():
+    try:
+        ticker = yf.Ticker("AUDUSD=X")
+        data = ticker.history(period="1d", interval="1m")
+        if data.empty:
+            return {"rate": None, "error": "No data"}
+        rate = round(float(data["Close"].iloc[-1]), 4)
+        return {
+            "aud_usd": rate,
+            "usd_aud": round(1 / rate, 4),
+            "fetched_at": datetime.utcnow().isoformat(),
+        }
+    except Exception as e:
+        return {"rate": None, "error": str(e)}
 
 
 @app.get("/assets")
