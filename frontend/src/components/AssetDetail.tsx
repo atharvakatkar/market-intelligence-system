@@ -32,25 +32,29 @@ const COLOR_MAP: Record<string, string> = {
 export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: AssetDetailProps) {
     const [data, setData] = useState<any>(null);
     const [sentimentHistory, setSentimentHistory] = useState<any[]>([]);
+    const [accuracy, setAccuracy] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [assetRes, predRes, sentRes] = await Promise.all([
+                const [assetRes, predRes, sentRes, accRes] = await Promise.all([
                     fetch(`${apiUrl}/asset/${assetName}`),
                     fetch(`${apiUrl}/predictions/${assetName}`),
-                    fetch(`${apiUrl}/sentiment/history/${assetName}`)
+                    fetch(`${apiUrl}/sentiment/history/${assetName}`),
+                    fetch(`${apiUrl}/predictions/accuracy/${assetName}`)
                 ]);
                 const assetJson = await assetRes.json();
                 const predJson = await predRes.json();
                 const sentJson = await sentRes.json();
+                const accJson = await accRes.json();
                 setData({
                     ...assetJson,
                     predictions: predJson.predictions || [],
                     disclaimer: predJson.disclaimer
                 });
                 setSentimentHistory(sentJson.history || []);
+                setAccuracy(accJson);
                 setLoading(false);
             } catch (error) {
                 console.error('Failed to fetch asset data:', error);
@@ -240,6 +244,70 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                             />
                         </AreaChart>
                     </ResponsiveContainer>
+                </div>
+            )}
+
+
+            {/* Prediction Accuracy Tracker */}
+            {accuracy && accuracy.predictions?.length > 0 && (
+                <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-semibold text-white">Prediction Accuracy</h2>
+                        {accuracy.avg_error_pct !== null ? (
+                            <span className="text-sm text-gray-400">
+                                Avg error: <span className="text-white font-bold">{accuracy.avg_error_pct}%</span>
+                            </span>
+                        ) : (
+                            <span className="text-xs text-gray-500 italic">Awaiting actual prices</span>
+                        )}
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="text-gray-500 text-xs uppercase border-b border-gray-800">
+                                    <th className="text-left py-2">Date</th>
+                                    <th className="text-right py-2">Predicted</th>
+                                    <th className="text-right py-2">Actual</th>
+                                    <th className="text-right py-2">Error</th>
+                                    <th className="text-right py-2">Model R²</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {accuracy.predictions.map((p: any, i: number) => (
+                                    <tr key={i} className="border-b border-gray-800 last:border-0">
+                                        <td className="py-2 text-gray-300">{p.date}</td>
+                                        <td className="py-2 text-right text-gray-300">
+                                            {assetName === 'asx200'
+                                                ? `${p.predicted_price.toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts`
+                                                : audRate
+                                                    ? `AU$${(p.predicted_price * audRate).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                                    : `$${p.predicted_price}`
+                                            }
+                                        </td>
+                                        <td className="py-2 text-right text-gray-300">
+                                            {p.actual_price
+                                                ? assetName === 'asx200'
+                                                    ? `${p.actual_price.toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts`
+                                                    : audRate
+                                                        ? `AU$${(p.actual_price * audRate).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                                        : `$${p.actual_price}`
+                                                : <span className="text-gray-600 italic">pending</span>
+                                            }
+                                        </td>
+                                        <td className="py-2 text-right">
+                                            {p.error_pct !== null
+                                                ? <span className={p.error_pct < 2 ? 'text-green-400' : p.error_pct < 5 ? 'text-yellow-400' : 'text-red-400'}>
+                                                    {p.error_pct}%
+                                                </span>
+                                                : <span className="text-gray-600 italic">—</span>
+                                            }
+                                        </td>
+                                        <td className="py-2 text-right text-gray-500">{p.model_r2}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 

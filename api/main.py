@@ -243,6 +243,57 @@ def get_volatility_history(asset_name: str):
         db.close()
 
 
+@app.get("/predictions/accuracy/{asset_name}")
+def get_prediction_accuracy(asset_name: str):
+    db = SessionLocal()
+    try:
+        results = db.execute(
+            text(
+                """
+            SELECT 
+                prediction_date,
+                predicted_price,
+                actual_price,
+                model_r2,
+                generated_at,
+                CASE 
+                    WHEN actual_price IS NOT NULL 
+                    THEN ABS(predicted_price - actual_price) / actual_price * 100
+                    ELSE NULL
+                END as error_pct
+            FROM price_predictions
+            WHERE asset = :asset
+            ORDER BY prediction_date ASC
+        """
+            ),
+            {"asset": asset_name},
+        ).fetchall()
+
+        completed = [r for r in results if r[2] is not None]
+        avg_error = None
+        if completed:
+            errors = [float(r[5]) for r in completed if r[5] is not None]
+            avg_error = round(sum(errors) / len(errors), 2) if errors else None
+
+        return {
+            "asset": asset_name,
+            "avg_error_pct": avg_error,
+            "predictions": [
+                {
+                    "date": str(r[0]),
+                    "predicted_price": float(r[1]),
+                    "actual_price": float(r[2]) if r[2] else None,
+                    "error_pct": round(float(r[5]), 2) if r[5] else None,
+                    "model_r2": float(r[3]) if r[3] else None,
+                    "generated_at": r[4].isoformat(),
+                }
+                for r in results
+            ],
+        }
+    finally:
+        db.close()
+
+
 @app.get("/predictions/{asset_name}")
 def get_predictions(asset_name: str):
     assets = ["gold", "silver", "oil", "asx200"]
