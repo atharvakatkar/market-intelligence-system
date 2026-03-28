@@ -250,3 +250,41 @@ def get_predictions(asset_name: str):
         return {"error": f"Asset {asset_name} not found"}
     result = train_and_predict(asset_name)
     return result
+
+
+@app.get("/sentiment/history/{asset_name}")
+def get_sentiment_history(asset_name: str):
+    db = SessionLocal()
+    try:
+        results = db.execute(
+            text(
+                """
+            SELECT 
+                DATE(pipeline_run_at) as run_date,
+                AVG(negative_pct) as negative_pct,
+                AVG(positive_pct) as positive_pct,
+                AVG(neutral_pct) as neutral_pct,
+                SUM(headline_count) as headline_count
+            FROM asset_sentiment_summary
+            WHERE asset = :asset
+            GROUP BY DATE(pipeline_run_at)
+            ORDER BY run_date ASC
+        """
+            ),
+            {"asset": asset_name},
+        ).fetchall()
+        return {
+            "asset": asset_name,
+            "history": [
+                {
+                    "date": str(r[0]),
+                    "negative_pct": round(float(r[1]) * 100, 1),
+                    "positive_pct": round(float(r[2]) * 100, 1),
+                    "neutral_pct": round(float(r[3]) * 100, 1),
+                    "headline_count": int(r[4]),
+                }
+                for r in results
+            ],
+        }
+    finally:
+        db.close()

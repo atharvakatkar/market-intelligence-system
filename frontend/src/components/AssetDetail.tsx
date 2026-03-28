@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 interface AssetDetailProps {
     assetName: string;
@@ -31,22 +31,26 @@ const COLOR_MAP: Record<string, string> = {
 
 export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: AssetDetailProps) {
     const [data, setData] = useState<any>(null);
+    const [sentimentHistory, setSentimentHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [assetRes, predRes] = await Promise.all([
+                const [assetRes, predRes, sentRes] = await Promise.all([
                     fetch(`${apiUrl}/asset/${assetName}`),
-                    fetch(`${apiUrl}/predictions/${assetName}`)
+                    fetch(`${apiUrl}/predictions/${assetName}`),
+                    fetch(`${apiUrl}/sentiment/history/${assetName}`)
                 ]);
                 const assetJson = await assetRes.json();
                 const predJson = await predRes.json();
+                const sentJson = await sentRes.json();
                 setData({
                     ...assetJson,
                     predictions: predJson.predictions || [],
                     disclaimer: predJson.disclaimer
                 });
+                setSentimentHistory(sentJson.history || []);
                 setLoading(false);
             } catch (error) {
                 console.error('Failed to fetch asset data:', error);
@@ -180,6 +184,62 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                     {data.disclaimer && (
                         <p className="text-xs text-gray-500 mt-3 italic">{data.disclaimer}</p>
                     )}
+                </div>
+            )}
+
+            {/* Sentiment Trend Chart */}
+            {sentimentHistory.length > 0 && (
+                <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 mb-6">
+                    <h2 className="text-lg font-semibold text-white mb-4">
+                        Sentiment Trend
+                    </h2>
+                    <ResponsiveContainer width="100%" height={200}>
+                        <AreaChart data={sentimentHistory}>
+                            <XAxis
+                                dataKey="date"
+                                tick={{ fill: '#6b7280', fontSize: 11 }}
+                                tickFormatter={(val) => val.slice(5)}
+                            />
+                            <YAxis
+                                tick={{ fill: '#6b7280', fontSize: 11 }}
+                                domain={[0, 100]}
+                                tickFormatter={(val) => `${val}%`}
+                                width={45}
+                            />
+                            <Tooltip
+                                contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151' }}
+                                labelStyle={{ color: '#9ca3af' }}
+                                formatter={(value: any) => [`${value}%`]}
+                            />
+                            <Legend
+                                wrapperStyle={{ fontSize: '12px', color: '#9ca3af' }}
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="negative_pct"
+                                stackId="1"
+                                stroke="#ef4444"
+                                fill="#ef444433"
+                                name="Negative"
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="positive_pct"
+                                stackId="2"
+                                stroke="#22c55e"
+                                fill="#22c55e33"
+                                name="Positive"
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="neutral_pct"
+                                stackId="3"
+                                stroke="#6b7280"
+                                fill="#6b728033"
+                                name="Neutral"
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
                 </div>
             )}
 
