@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface AssetDetailProps {
@@ -22,6 +22,13 @@ const ASSET_LABELS: Record<string, string> = {
     asx200: 'ASX 200'
 };
 
+const COLOR_MAP: Record<string, string> = {
+    green: '#22c55e',
+    yellow: '#eab308',
+    orange: '#f97316',
+    red: '#ef4444'
+};
+
 export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: AssetDetailProps) {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -29,9 +36,17 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await fetch(`${apiUrl}/asset/${assetName}`);
-                const json = await response.json();
-                setData(json);
+                const [assetRes, predRes] = await Promise.all([
+                    fetch(`${apiUrl}/asset/${assetName}`),
+                    fetch(`${apiUrl}/predictions/${assetName}`)
+                ]);
+                const assetJson = await assetRes.json();
+                const predJson = await predRes.json();
+                setData({
+                    ...assetJson,
+                    predictions: predJson.predictions || [],
+                    disclaimer: predJson.disclaimer
+                });
                 setLoading(false);
             } catch (error) {
                 console.error('Failed to fetch asset data:', error);
@@ -51,20 +66,23 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
 
     if (!data) return null;
 
-    const priceData = [...(data.prices || [])].reverse().map((p: any) => ({
-        date: p.date,
-        price: p.close,
-        audPrice: audRate && assetName !== 'asx200' ? parseFloat((p.close * audRate).toFixed(2)) : p.close
-    }));
-
     const vol = data.volatility;
 
-    const COLOR_MAP: Record<string, string> = {
-        green: '#22c55e',
-        yellow: '#eab308',
-        orange: '#f97316',
-        red: '#ef4444'
-    };
+    const priceData = [...(data.prices || [])].reverse().map((p: any) => ({
+        date: p.date,
+        audPrice: audRate && assetName !== 'asx200' ? parseFloat((p.close * audRate).toFixed(2)) : p.close,
+        predictedPrice: null
+    }));
+
+    const predictionData = (data.predictions || []).map((p: any) => ({
+        date: p.date,
+        audPrice: null,
+        predictedPrice: audRate && assetName !== 'asx200'
+            ? parseFloat((p.predicted_price * audRate).toFixed(2))
+            : p.predicted_price
+    }));
+
+    const chartData = [...priceData, ...predictionData];
 
     return (
         <div className="max-w-5xl mx-auto px-6 py-8">
@@ -109,9 +127,11 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
             {/* Price Chart */}
             {priceData.length > 0 && (
                 <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 mb-6">
-                    <h2 className="text-lg font-semibold text-white mb-4">Price History (30 days)</h2>
+                    <h2 className="text-lg font-semibold text-white mb-4">
+                        Price History (30 days) + 10 Day Forecast
+                    </h2>
                     <ResponsiveContainer width="100%" height={250}>
-                        <LineChart data={priceData}>
+                        <LineChart data={chartData}>
                             <XAxis
                                 dataKey="date"
                                 tick={{ fill: '#6b7280', fontSize: 11 }}
@@ -126,11 +146,12 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                                 contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151' }}
                                 labelStyle={{ color: '#9ca3af' }}
                                 itemStyle={{ color: '#fff' }}
-                                formatter={(value: any) => {
+                                formatter={(value: any, name: any) => {
+                                    const label = name === 'audPrice' ? 'Actual' : 'Forecast';
                                     if (assetName === 'asx200') {
-                                        return [`${Number(value).toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts`, 'Price'];
+                                        return [`${Number(value).toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts`, label];
                                     }
-                                    return [`AU$${Number(value).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Price'];
+                                    return [`AU$${Number(value).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, label];
                                 }}
                             />
                             <Line
@@ -140,9 +161,25 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                                 strokeWidth={2}
                                 dot={{ r: 3, fill: vol ? COLOR_MAP[vol.color] : '#3b82f6' }}
                                 activeDot={{ r: 5 }}
+                                connectNulls={false}
+                                name="audPrice"
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="predictedPrice"
+                                stroke="#6366f1"
+                                strokeWidth={2}
+                                strokeDasharray="5 5"
+                                dot={{ r: 3, fill: '#6366f1' }}
+                                activeDot={{ r: 5 }}
+                                connectNulls={false}
+                                name="predictedPrice"
                             />
                         </LineChart>
                     </ResponsiveContainer>
+                    {data.disclaimer && (
+                        <p className="text-xs text-gray-500 mt-3 italic">{data.disclaimer}</p>
+                    )}
                 </div>
             )}
 

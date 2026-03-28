@@ -16,8 +16,11 @@ from database.writer import (
     save_headlines_and_sentiment,
     save_sentiment_summary,
     save_volatility_scores,
+    save_predictions,
+    update_actual_prices,
 )
 from aggregator.aggregator import run_aggregator
+from aggregator.predictor import train_and_predict
 from datetime import datetime
 
 
@@ -72,9 +75,18 @@ def run_full_pipeline():
     save_sentiment_summary(asset_sentiments)
 
     # Step 5 — Run aggregator and save volatility scores
-    print("\n[5/5] Running aggregator...")
+    print("\n[5/5] Running aggregator and predictions...")
     volatility_scores = run_aggregator()
     save_volatility_scores(volatility_scores)
+
+    # Step 6 — Generate and save predictions
+    for asset in ["gold", "silver", "oil", "asx200"]:
+        pred_result = train_and_predict(asset)
+        if pred_result["status"] == "ok":
+            save_predictions(asset, pred_result["predictions"], pred_result["model_r2"])
+
+    # Step 7 — Update actual prices for past predictions
+    update_actual_prices()
 
     # Print summary
     print(f"\n{'='*60}")

@@ -10,6 +10,7 @@ from database.connection import SessionLocal
 from aggregator.aggregator import run_aggregator
 from datetime import datetime
 import yfinance as yf
+from aggregator.predictor import train_and_predict
 
 app = FastAPI(
     title="Market Intelligence System",
@@ -240,3 +241,12 @@ def get_volatility_history(asset_name: str):
         }
     finally:
         db.close()
+
+
+@app.get("/predictions/{asset_name}")
+def get_predictions(asset_name: str):
+    assets = ["gold", "silver", "oil", "asx200"]
+    if asset_name not in assets:
+        return {"error": f"Asset {asset_name} not found"}
+    result = train_and_predict(asset_name)
+    return result

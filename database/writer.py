@@ -178,3 +178,58 @@ def save_volatility_scores(scores: dict):
         print(f"Error saving volatility scores: {e}")
     finally:
         db.close()
+
+
+def save_predictions(asset: str, predictions: list, model_r2: float):
+    db = SessionLocal()
+    try:
+        for p in predictions:
+            db.execute(
+                text(
+                    """
+                INSERT INTO price_predictions (
+                    asset, prediction_date, predicted_price, model_r2, generated_at
+                ) VALUES (
+                    :asset, :prediction_date, :predicted_price, :model_r2, :generated_at
+                )
+            """
+                ),
+                {
+                    "asset": asset,
+                    "prediction_date": p["date"],
+                    "predicted_price": p["predicted_price"],
+                    "model_r2": model_r2,
+                    "generated_at": datetime.utcnow(),
+                },
+            )
+        db.commit()
+        print(f"Saved {len(predictions)} predictions for {asset}")
+    except Exception as e:
+        db.rollback()
+        print(f"Error saving predictions for {asset}: {e}")
+    finally:
+        db.close()
+
+
+def update_actual_prices():
+    db = SessionLocal()
+    try:
+        db.execute(
+            text(
+                """
+            UPDATE price_predictions pp
+            SET actual_price = ap.close_price
+            FROM asset_prices ap
+            WHERE pp.asset = ap.asset
+            AND pp.prediction_date = ap.price_date
+            AND pp.actual_price IS NULL
+        """
+            )
+        )
+        db.commit()
+        print("Updated actual prices for past predictions")
+    except Exception as e:
+        db.rollback()
+        print(f"Error updating actual prices: {e}")
+    finally:
+        db.close()
