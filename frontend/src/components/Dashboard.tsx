@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw, TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
+import { RefreshCw, TrendingUp, TrendingDown, Minus, Activity, BarChart2 } from 'lucide-react';
 import { Asset } from '../App';
 
 interface DashboardProps {
@@ -8,6 +8,8 @@ interface DashboardProps {
     onSelectAsset: (asset: string) => void;
     onRefresh: () => void;
     audRate: number | null;
+    lagAnalysis: any;
+    lastPipelineRun: any;
 }
 
 const ASSET_LABELS: Record<string, string> = {
@@ -47,7 +49,7 @@ const LEVEL_TEXT: Record<string, string> = {
 
 const DOMAINS = ['Precious Metals', 'Energy', 'Equity Markets'];
 
-export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefresh, audRate }: DashboardProps) {
+export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefresh, audRate, lagAnalysis, lastPipelineRun }: DashboardProps) {
     const getAssetsByDomain = (domain: string) =>
         assets.filter(a => ASSET_DOMAINS[a.asset] === domain);
 
@@ -81,8 +83,15 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefres
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="text-right">
-                        <p className="text-xs text-gray-500">Last updated</p>
+                        <p className="text-xs text-gray-500">Dashboard refreshed</p>
                         <p className="text-sm text-gray-300">{lastUpdated}</p>
+                        {lastPipelineRun?.minutes_ago !== null && (
+                            <p className="text-xs text-gray-500 mt-1">
+                                Pipeline: {lastPipelineRun?.minutes_ago < 60
+                                    ? `${lastPipelineRun?.minutes_ago}m ago`
+                                    : `${Math.floor(lastPipelineRun?.minutes_ago / 60)}h ago`}
+                            </p>
+                        )}
                     </div>
                     <button
                         onClick={onRefresh}
@@ -164,6 +173,49 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefres
                     </div>
                 );
             })}
+            {/* Lag Analysis */}
+            <div className="mt-8">
+                <div className="flex items-center gap-2 mb-4">
+                    <BarChart2 className="w-5 h-5 text-blue-400" />
+                    <h2 className="text-lg font-semibold text-gray-300 uppercase tracking-wider text-sm">
+                        Sentiment — Price Lag Analysis
+                    </h2>
+                </div>
+                <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
+                    {lagAnalysis ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {Object.entries(lagAnalysis).map(([asset, data]: [string, any]) => (
+                                <div key={asset} className="border border-gray-800 rounded-lg p-4">
+                                    <h3 className="text-white font-semibold mb-2">{ASSET_LABELS[asset]}</h3>
+                                    {data.status === 'insufficient_data' ? (
+                                        <div>
+                                            <p className="text-gray-500 text-sm italic">
+                                                Insufficient data — need 10+ days of pipeline runs
+                                            </p>
+                                            <div className="mt-2 w-full bg-gray-800 rounded-full h-1.5">
+                                                <div
+                                                    className="h-1.5 rounded-full bg-blue-500"
+                                                    style={{ width: `${Math.min((data.rows / 10) * 100, 100)}%` }}
+                                                />
+                                            </div>
+                                            <p className="text-xs text-gray-600 mt-1">{data.rows}/10 days collected</p>
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <p className="text-sm text-gray-300">{data.interpretation}</p>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Best lag: {data.best_lag} — correlation: {data.best_correlation}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-gray-500 text-sm">Loading lag analysis...</p>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }

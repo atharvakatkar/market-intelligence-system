@@ -11,6 +11,7 @@ from aggregator.aggregator import run_aggregator
 from datetime import datetime
 import yfinance as yf
 from aggregator.predictor import train_and_predict
+from aggregator.lag_analysis import run_lag_analysis
 
 app = FastAPI(
     title="Market Intelligence System",
@@ -336,6 +337,38 @@ def get_sentiment_history(asset_name: str):
                 }
                 for r in results
             ],
+        }
+    finally:
+        db.close()
+
+
+@app.get("/lag-analysis")
+def get_lag_analysis():
+    results = run_lag_analysis()
+    return {"lag_analysis": results, "generated_at": datetime.utcnow().isoformat()}
+
+
+@app.get("/pipeline/last-run")
+def get_last_run():
+    db = SessionLocal()
+    try:
+        result = db.execute(
+            text(
+                """
+            SELECT MAX(pipeline_run_at) as last_run
+            FROM asset_sentiment_summary
+        """
+            )
+        ).fetchone()
+        last_run = result[0] if result else None
+        now = datetime.utcnow()
+        minutes_ago = None
+        if last_run:
+            diff = now - last_run
+            minutes_ago = int(diff.total_seconds() / 60)
+        return {
+            "last_run": last_run.isoformat() if last_run else None,
+            "minutes_ago": minutes_ago,
         }
     finally:
         db.close()
