@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Dashboard from './components/Dashboard';
 import AssetDetail from './components/AssetDetail';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://market-intelligence-system-tau.vercel.app';
 
 export interface Asset {
     asset: string;
