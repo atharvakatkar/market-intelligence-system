@@ -84,8 +84,11 @@ def calculate_lag_correlation(asset: str, max_lag_days: int = 5) -> dict:
             columns={"run_date": "price_date"}
         ),
         on="price_date",
-        how="inner",
+        how="left",
     )
+
+    merged[["negative_pct", "positive_pct"]] = merged[["negative_pct", "positive_pct"]].ffill()
+    merged = merged.dropna(subset=["negative_pct", "price_return"])
 
     if len(merged) < 10:
         return {
