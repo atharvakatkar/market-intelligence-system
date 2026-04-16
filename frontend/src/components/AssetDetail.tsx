@@ -151,10 +151,12 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                                 width={80}
                             />
                             <Tooltip
+                            filterNull={true}
                                 contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151' }}
                                 labelStyle={{ color: '#9ca3af' }}
                                 itemStyle={{ color: '#fff' }}
                                 formatter={(value: any, name: any) => {
+                                    if (value === null || value === undefined) return null;
                                     const label = name === 'audPrice' ? 'Actual' : 'Forecast';
                                     if (assetName === 'asx200') {
                                         return [`${Number(value).toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts`, label];
