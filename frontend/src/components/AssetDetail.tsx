@@ -29,6 +29,28 @@ const COLOR_MAP: Record<string, string> = {
     red: '#ef4444'
 };
 
+const CustomTooltip = ({ active, payload, label, assetName}: any) => {
+    if (!active || !payload || !payload.length) return null;
+    
+    const validItems = payload.filter((p: any) => p.value !== null && p.value !== undefined);
+    if (!validItems.length) return null;
+
+    return (
+        <div style={{ backgroundColor: '#111827', border: '1px solid #374151', padding: '8px 12px' }}>
+            <p style={{ color: '#9ca3af', marginBottom: 4 }}>{label}</p>
+            {validItems.map((item: any) => (
+                <p key={item.name} style={{ color: '#fff', margin: 0 }}>
+                    {item.name === 'audPrice' ? 'Actual' : 'Forecast'}: {
+                        assetName === 'asx200'
+                            ? `${Number(item.value).toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts`
+                            : `AU$${Number(item.value).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    }
+                </p>
+            ))}
+        </div>
+    );
+};
+
 export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: AssetDetailProps) {
     const [data, setData] = useState<any>(null);
     const [sentimentHistory, setSentimentHistory] = useState<any[]>([]);
@@ -150,20 +172,7 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                                 domain={['auto', 'auto']}
                                 width={80}
                             />
-                            <Tooltip
-                            filterNull={true}
-                                contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151' }}
-                                labelStyle={{ color: '#9ca3af' }}
-                                itemStyle={{ color: '#fff' }}
-                                formatter={(value: any, name: any) => {
-                                    if (value === null || value === undefined) return null;
-                                    const label = name === 'audPrice' ? 'Actual' : 'Forecast';
-                                    if (assetName === 'asx200') {
-                                        return [`${Number(value).toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts`, label];
-                                    }
-                                    return [`AU$${Number(value).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, label];
-                                }}
-                            />
+                            <Tooltip content={<CustomTooltip assetName={assetName}/>} />
                             <Line
                                 type="monotone"
                                 dataKey="audPrice"
