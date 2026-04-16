@@ -192,6 +192,11 @@ def save_predictions(asset: str, predictions: list, model_r2: float):
                 ) VALUES (
                     :asset, :prediction_date, :predicted_price, :model_r2, :generated_at
                 )
+                ON CONFLICT (asset, prediction_date) 
+                DO UPDATE SET
+                    predicted_price = EXCLUDED.predicted_price,
+                    model_r2 = EXCLUDED.model_r2,
+                    generated_at = EXCLUDED.generated_at
             """
                 ),
                 {
