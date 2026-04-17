@@ -227,7 +227,7 @@ def update_actual_prices():
             FROM asset_prices ap
             WHERE pp.asset = ap.asset
             AND pp.prediction_date = ap.price_date
-            AND pp.actual_price IS NULL
+            AND pp.prediction_date <= CURRENT_DATE
         """
             )
         )
