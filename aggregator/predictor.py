@@ -46,8 +46,8 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def train_and_predict(asset: str, forecast_days: int = 7) -> dict:
-    # Generate predictions for the next 7 trading days
+def train_and_predict(asset: str, forecast_days: int = 5) -> dict:
+    # Generate predictions for the next 5 trading days
     df = get_price_history_for_prediction(asset)
 
     if df.empty or len(df) < 30:
@@ -137,5 +137,5 @@ if __name__ == "__main__":
     for asset in ["gold", "silver", "oil", "asx200"]:
         result = train_and_predict(asset)
         print(f"\n{asset.upper()} — R² {result.get('model_r2')}")
-        for p in result.get("predictions", [])[:3]:
+        for p in result.get("predictions", []):
             print(f"  {p['date']}: ${p['predicted_price']}")
