@@ -46,7 +46,8 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def train_and_predict(asset: str, forecast_days: int = 10) -> dict:
+def train_and_predict(asset: str, forecast_days: int = 7) -> dict:
+    # Generate predictions for the next 7 trading days
     df = get_price_history_for_prediction(asset)
 
     if df.empty or len(df) < 30:
@@ -76,7 +77,7 @@ def train_and_predict(asset: str, forecast_days: int = 10) -> dict:
 
     train_score = round(model.score(X_scaled, y), 4)
 
-    # Generate predictions for next 10 days
+    # Generate predictions for next 7 days
     predictions = []
     last_row = df.iloc[-1].copy()
     current_price = float(last_row["close_price"])
@@ -84,7 +85,14 @@ def train_and_predict(asset: str, forecast_days: int = 10) -> dict:
 
     temp_prices = list(df["close_price"].values)
 
-    for i in range(1, forecast_days + 1):
+    trading_days_generated = 0
+    i = 0
+    while trading_days_generated < forecast_days:
+        i += 1
+        forecast_date = last_date + timedelta(days=i)
+        if forecast_date.weekday() >= 5:
+            continue
+
         temp_df = pd.DataFrame({"close_price": temp_prices})
         temp_df["return_1d"] = temp_df["close_price"].pct_change(1)
         temp_df["return_5d"] = temp_df["close_price"].pct_change(5)
@@ -103,7 +111,6 @@ def train_and_predict(asset: str, forecast_days: int = 10) -> dict:
         features_scaled = scaler.transform(features)
         predicted_price = float(model.predict(features_scaled)[0])
 
-        forecast_date = last_date + timedelta(days=i)
         predictions.append(
             {
                 "date": forecast_date.strftime("%Y-%m-%d"),
@@ -113,6 +120,7 @@ def train_and_predict(asset: str, forecast_days: int = 10) -> dict:
         )
 
         temp_prices.append(predicted_price)
+        trading_days_generated += 1
 
     return {
         "asset": asset,
