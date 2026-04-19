@@ -29,9 +29,9 @@ const COLOR_MAP: Record<string, string> = {
     red: '#ef4444'
 };
 
-const CustomTooltip = ({ active, payload, label, assetName}: any) => {
+const CustomTooltip = ({ active, payload, label, assetName }: any) => {
     if (!active || !payload || !payload.length) return null;
-    
+
     const validItems = payload.filter((p: any) => p.value !== null && p.value !== undefined);
     if (!validItems.length) return null;
 
@@ -56,6 +56,7 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
     const [sentimentHistory, setSentimentHistory] = useState<any[]>([]);
     const [accuracy, setAccuracy] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [activePage, setActivePage] = useState<number>(0);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -172,7 +173,7 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                                 domain={['auto', 'auto']}
                                 width={80}
                             />
-                            <Tooltip content={<CustomTooltip assetName={assetName}/>} />
+                            <Tooltip content={<CustomTooltip assetName={assetName} />} />
                             <Line
                                 type="monotone"
                                 dataKey="audPrice"
@@ -260,67 +261,117 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
 
 
             {/* Prediction Accuracy Tracker */}
-            {accuracy && accuracy.predictions?.length > 0 && (
-                <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-white">Prediction Accuracy</h2>
-                        {accuracy.avg_error_pct !== null ? (
-                            <span className="text-sm text-gray-400">
-                                Avg error: <span className="text-white font-bold">{accuracy.avg_error_pct}%</span>
-                            </span>
-                        ) : (
-                            <span className="text-xs text-gray-500 italic">Awaiting actual prices</span>
-                        )}
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="text-gray-500 text-xs uppercase border-b border-gray-800">
-                                    <th className="text-left py-2">Date</th>
-                                    <th className="text-right py-2">Predicted</th>
-                                    <th className="text-right py-2">Actual</th>
-                                    <th className="text-right py-2">Error</th>
-                                    <th className="text-right py-2">Model R²</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {accuracy.predictions.map((p: any, i: number) => (
-                                    <tr key={i} className="border-b border-gray-800 last:border-0">
-                                        <td className="py-2 text-gray-300">{p.date}</td>
-                                        <td className="py-2 text-right text-gray-300">
-                                            {assetName === 'asx200'
-                                                ? `${p.predicted_price.toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts`
-                                                : audRate
-                                                    ? `AU$${(p.predicted_price * audRate).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                                    : `$${p.predicted_price}`
-                                            }
-                                        </td>
-                                        <td className="py-2 text-right text-gray-300">
-                                            {p.actual_price
-                                                ? assetName === 'asx200'
-                                                    ? `${p.actual_price.toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts`
-                                                    : audRate
-                                                        ? `AU$${(p.actual_price * audRate).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                                        : `$${p.actual_price}`
-                                                : <span className="text-gray-600 italic">pending</span>
-                                            }
-                                        </td>
-                                        <td className="py-2 text-right">
-                                            {p.error_pct !== null
-                                                ? <span className={p.error_pct < 2 ? 'text-green-400' : p.error_pct < 5 ? 'text-yellow-400' : 'text-red-400'}>
-                                                    {p.error_pct}%
-                                                </span>
-                                                : <span className="text-gray-600 italic">—</span>
-                                            }
-                                        </td>
-                                        <td className="py-2 text-right text-gray-500">{p.model_r2}</td>
+            {accuracy && accuracy.predictions?.length > 0 && (() => {
+                // Split predictions: current week (no actuals) vs historical (has actuals)
+                const currentWeek = accuracy.predictions.filter((p: any) => p.actual_price === null);
+                const historical = accuracy.predictions.filter((p: any) => p.actual_price !== null);
+
+                // Group historical into weeks of 5
+                const historicalWeeks: any[][] = [];
+                for (let i = 0; i < historical.length; i += 5) {
+                    historicalWeeks.push(historical.slice(i, i + 5));
+                }
+
+                const currentRows = activePage === 0
+                    ? currentWeek
+                    : historicalWeeks[activePage - 1] || [];
+
+                const formatPrice = (price: number) =>
+                    assetName === 'asx200'
+                        ? `${price.toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts`
+                        : audRate
+                            ? `AU$${(price * audRate).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                            : `$${price}`;
+
+                // Avg error for current page
+                const pageErrors = currentRows
+                    .filter((p: any) => p.error_pct !== null)
+                    .map((p: any) => p.error_pct);
+                const pageAvgError = pageErrors.length > 0
+                    ? (pageErrors.reduce((a: number, b: number) => a + b, 0) / pageErrors.length).toFixed(2)
+                    : null;
+
+                return (
+                    <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 mb-6">
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold text-white">Prediction Accuracy</h2>
+                            {pageAvgError !== null ? (
+                                <span className="text-sm text-gray-400">
+                                    Avg error: <span className="text-white font-bold">{pageAvgError}%</span>
+                                </span>
+                            ) : (
+                                <span className="text-xs text-gray-500 italic">Awaiting actual prices</span>
+                            )}
+                        </div>
+
+                        {/* Pagination Buttons */}
+                        <div className="flex gap-2 mb-4 flex-wrap">
+                            <button
+                                onClick={() => setActivePage(0)}
+                                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${activePage === 0
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                                    }`}
+                            >
+                                This Week
+                            </button>
+                            {historicalWeeks.map((_: any, idx: number) => (
+                                <button
+                                    key={idx + 1}
+                                    onClick={() => setActivePage(idx + 1)}
+                                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${activePage === idx + 1
+                                        ? 'bg-purple-600 text-white'
+                                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                                        }`}
+                                >
+                                    {idx + 1}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Table */}
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="text-gray-500 text-xs uppercase border-b border-gray-800">
+                                        <th className="text-left py-2">Date</th>
+                                        <th className="text-right py-2">Predicted</th>
+                                        <th className="text-right py-2">Actual</th>
+                                        <th className="text-right py-2">Error</th>
+                                        <th className="text-right py-2">Model R²</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {currentRows.map((p: any, i: number) => (
+                                        <tr key={i} className="border-b border-gray-800 last:border-0">
+                                            <td className="py-2 text-gray-300">{p.date}</td>
+                                            <td className="py-2 text-right text-gray-300">
+                                                {formatPrice(p.predicted_price)}
+                                            </td>
+                                            <td className="py-2 text-right text-gray-300">
+                                                {p.actual_price
+                                                    ? formatPrice(p.actual_price)
+                                                    : <span className="text-gray-600 italic">pending</span>
+                                                }
+                                            </td>
+                                            <td className="py-2 text-right">
+                                                {p.error_pct !== null
+                                                    ? <span className={p.error_pct < 2 ? 'text-green-400' : p.error_pct < 5 ? 'text-yellow-400' : 'text-red-400'}>
+                                                        {p.error_pct}%
+                                                    </span>
+                                                    : <span className="text-gray-600 italic">—</span>
+                                                }
+                                            </td>
+                                            <td className="py-2 text-right text-gray-500">{p.model_r2}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
 
             {/* Headlines */}
             {data.headlines?.length > 0 && (
