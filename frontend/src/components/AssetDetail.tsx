@@ -385,7 +385,10 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                                 </span>
                                 <div>
                                     <p className="text-gray-300 text-sm">{h.headline}</p>
-                                    <p className="text-gray-600 text-xs mt-1">{h.source} · relevance {(h.relevance * 100).toFixed(0)}%</p>
+                                    <p className="text-gray-600 text-xs mt-1">
+                                        {h.source} · relevance {(h.relevance * 100).toFixed(0)}%
+                                        {h.published_at && ` · ${new Date(h.published_at).toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`}
+                                    </p>
                                 </div>
                             </div>
                         ))}
