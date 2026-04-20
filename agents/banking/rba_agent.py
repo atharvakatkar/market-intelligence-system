@@ -12,35 +12,6 @@ HEADERS = {
 def scrape_rba():
     headlines = []
     urls = [
-        "https://www.rba.gov.au/media-releases/",
-        "https://www.rba.gov.au/speeches/",
-    ]
-    for url in urls:
-        try:
-            response = requests.get(url, headers=HEADERS, timeout=10)
-            soup = BeautifulSoup(response.text, "lxml")
-            items = soup.select(
-                "h3.item-title a, .media-release-title a, h2 a, .listing-item h3 a"
-            )
-            for item in items[:10]:
-                text = item.get_text(strip=True)
-                if len(text) > 20:
-                    headlines.append(
-                        {
-                            "source": "rba",
-                            "headline": text,
-                            "assets": ["gold", "silver", "asx200"],
-                            "scraped_at": datetime.utcnow().isoformat(),
-                        }
-                    )
-        except Exception as e:
-            print(f"RBA scrape error ({url}): {e}")
-    return headlines
-
-
-def scrape_rba():
-    headlines = []
-    urls = [
         "https://www.rba.gov.au/rss/rss-cb-media-releases.xml",
         "https://www.rba.gov.au/rss/rss-cb-speeches.xml",
     ]
@@ -52,16 +23,25 @@ def scrape_rba():
             items = soup.find_all("item")[:10]
             for item in items:
                 title = item.find("title") or item.find("cb:simpleTitle")
+                pub_date = item.find("pubDate") or item.find("date")
                 if title:
                     text = title.get_text(strip=True)
                     text = text.encode("ascii", "ignore").decode("ascii")
                     if len(text) > 20:
+                        parsed_date = None
+                        if pub_date:
+                            try:
+                                from dateutil import parser as dateparser
+                                parsed_date = dateparser.parse(pub_date.get_text(strip=True)).isoformat()
+                            except Exception:
+                                parsed_date = None
                         headlines.append(
                             {
                                 "source": "rba",
                                 "headline": text,
                                 "assets": ["gold", "silver", "asx200"],
                                 "scraped_at": datetime.utcnow().isoformat(),
+                                "published_at": parsed_date,
                             }
                         )
         except Exception as e:

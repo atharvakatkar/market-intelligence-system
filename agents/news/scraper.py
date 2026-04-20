@@ -25,6 +25,7 @@ def scrape_kitco():
                         "headline": text,
                         "assets": ["gold", "silver"],
                         "scraped_at": datetime.utcnow().isoformat(),
+                        "published_at":None,
                     }
                 )
     except Exception as e:
@@ -48,6 +49,7 @@ def scrape_oilprice():
                         "headline": text,
                         "assets": ["oil"],
                         "scraped_at": datetime.utcnow().isoformat(),
+                        "published_at":None,
                     }
                 )
     except Exception as e:
@@ -69,15 +71,24 @@ def scrape_cnbc():
             items = soup.find_all("item")[:10]
             for item in items:
                 title = item.find("title")
+                pub_date = item.find("pubDate")
                 if title:
                     text = title.get_text(strip=True)
                     if len(text) > 20:
+                        parsed_date = None
+                        if pub_date:
+                            try:
+                                from email.utils import parsedate_to_datetime
+                                parsed_date = parsedate_to_datetime(pub_date.get_text(strip=True)).isoformat()
+                            except Exception:
+                                parsed_date = None
                         headlines.append(
                             {
                                 "source": "cnbc",
                                 "headline": text,
                                 "assets": ["gold", "silver", "oil", "asx200"],
                                 "scraped_at": datetime.utcnow().isoformat(),
+                                "published_at": parsed_date,
                             }
                         )
         except Exception as e:
@@ -94,15 +105,24 @@ def scrape_bbc():
         items = soup.find_all("item")[:10]
         for item in items:
             title = item.find("title")
+            pub_date = item.find("pubDate")
             if title:
                 text = title.get_text(strip=True)
                 if len(text) > 20:
+                    parsed_date = None
+                    if pub_date:
+                        try:
+                            from email.utils import parsedate_to_datetime
+                            parsed_date = parsedate_to_datetime(pub_date.get_text(strip=True)).isoformat()
+                        except Exception:
+                            parsed_date = None
                     headlines.append(
                         {
                             "source": "bbc",
                             "headline": text,
                             "assets": ["gold", "silver", "oil", "asx200"],
                             "scraped_at": datetime.utcnow().isoformat(),
+                            "published_at": parsed_date,
                         }
                     )
     except Exception as e:
@@ -118,7 +138,6 @@ def scrape_all():
     all_headlines.extend(scrape_bbc())
     print(f"Total headlines scraped: {len(all_headlines)}")
     return all_headlines
-
 
 if __name__ == "__main__":
     headlines = scrape_all()

@@ -44,8 +44,8 @@ def save_headlines_and_sentiment(results: list):
             result = db.execute(
                 text(
                     """
-                INSERT INTO headlines (source, headline, scraped_at)
-                VALUES (:source, :headline, :scraped_at)
+                INSERT INTO headlines (source, headline, scraped_at, published_at)
+                VALUES (:source, :headline, :scraped_at, :published_at)
                 RETURNING id
             """
                 ),
@@ -53,6 +53,7 @@ def save_headlines_and_sentiment(results: list):
                     "source": r["source"],
                     "headline": r["headline"],
                     "scraped_at": r["scraped_at"],
+                    "published_at": r.get("published_at", None),
                 },
             )
             headline_id = result.fetchone()[0]

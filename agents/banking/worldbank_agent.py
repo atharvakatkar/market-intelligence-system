@@ -29,16 +29,25 @@ def scrape_imf():
             items = soup.find_all("item")[:10]
             for item in items:
                 title = item.find("title")
+                pub_date = item.find("pubDate")
                 if title:
                     text = title.get_text(strip=True)
                     text = text.encode("ascii", "ignore").decode("ascii")
                     if len(text) > 25:
+                        parsed_date = None
+                        if pub_date:
+                            try:
+                                from email.utils import parsedate_to_datetime
+                                parsed_date = parsedate_to_datetime(pub_date.get_text(strip=True)).isoformat()
+                            except Exception:
+                                parsed_date = None
                         headlines.append(
                             {
                                 "source": sources[i],
                                 "headline": text,
                                 "assets": ["gold", "silver", "oil", "asx200"],
                                 "scraped_at": datetime.utcnow().isoformat(),
+                                "published_at": parsed_date,
                             }
                         )
         except Exception as e:

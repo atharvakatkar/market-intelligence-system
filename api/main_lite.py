@@ -116,7 +116,7 @@ def get_asset(asset_name: str):
             text(
                 """
             SELECT h.headline, h.source, ss.sentiment,
-                   ss.combined_relevance, ss.analysed_at
+                ss.combined_relevance, ss.analysed_at, h.published_at
             FROM headlines h
             JOIN sentiment_scores ss ON h.id = ss.headline_id
             WHERE ss.asset = :asset
@@ -161,6 +161,7 @@ def get_asset(asset_name: str):
                     "sentiment": h[2],
                     "relevance": float(h[3]) if h[3] else None,
                     "analysed_at": h[4].isoformat() if h[4] else None,
+                    "published_at": h[5].isoformat() if h[5] else None,
                 }
                 for h in headlines
             ],
@@ -187,7 +188,7 @@ def get_headlines(limit: int = 20):
             text(
                 """
             SELECT h.headline, h.source, ss.asset,
-                   ss.sentiment, ss.combined_relevance, ss.analysed_at
+                ss.sentiment, ss.combined_relevance, ss.analysed_at, h.published_at
             FROM headlines h
             JOIN sentiment_scores ss ON h.id = ss.headline_id
             ORDER BY ss.analysed_at DESC
@@ -205,6 +206,7 @@ def get_headlines(limit: int = 20):
                     "sentiment": r[3],
                     "relevance": float(r[4]) if r[4] else None,
                     "analysed_at": r[5].isoformat() if r[5] else None,
+                    "published_at": r[6].isoformat() if r[6] else None,
                 }
                 for r in results
             ]
