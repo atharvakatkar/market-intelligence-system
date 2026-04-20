@@ -92,7 +92,7 @@ def get_asset(asset_name: str):
                    trend_score, calculated_at
             FROM volatility_scores
             WHERE asset = :asset
-            ORDER BY calculated_at DESC
+            ORDER BY COALESCE(h.published_at, ss.analysed_at) DESC
             LIMIT 1
         """
             ),
@@ -191,7 +191,7 @@ def get_headlines(limit: int = 20):
                 ss.sentiment, ss.combined_relevance, ss.analysed_at, h.published_at
             FROM headlines h
             JOIN sentiment_scores ss ON h.id = ss.headline_id
-            ORDER BY ss.analysed_at DESC
+            ORDER BY COALESCE(h.published_at, ss.analysed_at) DESC
             LIMIT :limit
         """
             ),
