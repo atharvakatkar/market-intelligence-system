@@ -123,7 +123,7 @@ def get_asset(asset_name: str):
             FROM headlines h
             JOIN sentiment_scores ss ON h.id = ss.headline_id
             WHERE ss.asset = :asset
-            ORDER BY ss.analysed_at DESC
+            ORDER BY COALESCE(h.published_at, ss.analysed_at) DESC
             LIMIT 10
         """
             ),
