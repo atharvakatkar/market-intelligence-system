@@ -95,7 +95,7 @@ def get_asset(asset_name: str):
                    trend_score, calculated_at
             FROM volatility_scores
             WHERE asset = :asset
-            ORDER BY COALESCE(h.published_at, ss.analysed_at) DESC
+            ORDER BY calculated_at DESC
             LIMIT 1
         """
             ),
