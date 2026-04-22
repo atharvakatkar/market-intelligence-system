@@ -262,15 +262,43 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
 
             {/* Prediction Accuracy Tracker */}
             {accuracy && accuracy.predictions?.length > 0 && (() => {
-                // Split predictions: current week (no actuals) vs historical (has actuals)
-                const currentWeek = accuracy.predictions.filter((p: any) => p.actual_price === null);
-                const historical = accuracy.predictions.filter((p: any) => p.actual_price !== null);
 
-                // Group historical into weeks of 5
-                const historicalWeeks: any[][] = [];
-                for (let i = 0; i < historical.length; i += 5) {
-                    historicalWeeks.push(historical.slice(i, i + 5));
-                }
+                // Get Monday of any given date's calendar week
+                const getWeekMonday = (dateStr: string): string => {
+                    const d = new Date(dateStr);
+                    const day = d.getDay(); // 0=Sun, 1=Mon ... 6=Sat
+                    const diff = day === 0 ? -6 : 1 - day; // shift to Monday
+                    d.setDate(d.getDate() + diff);
+                    return d.toISOString().split('T')[0]; // YYYY-MM-DD
+                };
+
+                // Get Monday of current real-world week
+                const today = new Date();
+                const todayDay = today.getDay();
+                const todayDiff = todayDay === 0 ? -6 : 1 - todayDay;
+                today.setDate(today.getDate() + todayDiff);
+                const thisWeekMonday = today.toISOString().split('T')[0];
+
+                // Split by calendar week boundary
+                const currentWeek = accuracy.predictions.filter((p: any) =>
+                    getWeekMonday(p.date) === thisWeekMonday
+                );
+                const historical = accuracy.predictions.filter((p: any) =>
+                    getWeekMonday(p.date) !== thisWeekMonday
+                );
+
+                // Group historical into calendar weeks (Mon–Fri blocks)
+                const weekMap: { [key: string]: any[] } = {};
+                historical.forEach((p: any) => {
+                    const monday = getWeekMonday(p.date);
+                    if (!weekMap[monday]) weekMap[monday] = [];
+                    weekMap[monday].push(p);
+                });
+
+                // Sort weeks most recent first
+                const historicalWeeks: any[][] = Object.keys(weekMap)
+                    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+                    .map(key => weekMap[key]);
 
                 const currentRows = activePage === 0
                     ? currentWeek
