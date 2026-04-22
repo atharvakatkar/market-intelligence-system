@@ -265,15 +265,22 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
 
                 // Get Monday of any given date's calendar week
                 const getWeekMonday = (dateStr: string): string => {
-                    const d = new Date(dateStr);
-                    const day = d.getDay(); // 0=Sun, 1=Mon ... 6=Sat
-                    const diff = day === 0 ? -6 : 1 - day; // shift to Monday
+                    // Parse as local date to avoid UTC midnight timezone shift
+                    const [year, month, day] = dateStr.split('-').map(Number);
+                    const d = new Date(year, month - 1, day); // local time, no UTC shift
+                    const dayOfWeek = d.getDay();
+                    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
                     d.setDate(d.getDate() + diff);
-                    return d.toISOString().split('T')[0]; // YYYY-MM-DD
+                    // Return YYYY-MM-DD
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const dy = String(d.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${dy}`;
                 };
 
                 // Get Monday of current real-world week
-                const today = new Date();
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 const todayDay = today.getDay();
                 const todayDiff = todayDay === 0 ? -6 : 1 - todayDay;
                 today.setDate(today.getDate() + todayDiff);
