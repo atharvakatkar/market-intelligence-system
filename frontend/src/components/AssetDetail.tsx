@@ -284,7 +284,7 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                     getWeekMonday(p.date) === thisWeekMonday
                 );
                 const historical = accuracy.predictions.filter((p: any) =>
-                    getWeekMonday(p.date) !== thisWeekMonday
+                    getWeekMonday(p.date) < thisWeekMonday
                 );
 
                 // Group historical into calendar weeks (Mon–Fri blocks)
