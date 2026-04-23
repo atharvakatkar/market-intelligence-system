@@ -284,7 +284,10 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                 const todayDay = today.getDay();
                 const todayDiff = todayDay === 0 ? -6 : 1 - todayDay;
                 today.setDate(today.getDate() + todayDiff);
-                const thisWeekMonday = today.toISOString().split('T')[0];
+                const y = today.getFullYear();
+                const m = String(today.getMonth() + 1).padStart(2, '0');
+                const d = String(today.getDate()).padStart(2, '0');
+                const thisWeekMonday = `${y}-${m}-${d}`;
 
                 // Split by calendar week boundary
                 const currentWeek = accuracy.predictions.filter((p: any) =>
