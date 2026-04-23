@@ -69,6 +69,25 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefres
         return <Minus className="w-4 h-4 text-gray-400" />;
     };
 
+    const getVolatilityInterpretation = (sentiment: number, momentum: number, trend: number): string => {
+        const sentimentLabel =
+            sentiment < 0.25 ? "low negativity" :
+            sentiment < 0.45 ? "moderate negative sentiment" :
+            "elevated negative sentiment";
+
+        const momentumLabel =
+            momentum < 0.35 ? "downward price momentum" :
+            momentum < 0.55 ? "neutral price momentum" :
+            "upward price momentum";
+
+        const trendLabel =
+            trend < 0.35 ? "sentiment stabilising" :
+            trend < 0.55 ? "flat sentiment trend" :
+            "rising negative sentiment trend";
+
+        return `${sentimentLabel} · ${momentumLabel} · ${trendLabel}`;
+    };
+
     const overallRisk = assets.length > 0
         ? assets.reduce((sum, a) => sum + a.volatility_score, 0) / assets.length
         : 0;
@@ -167,6 +186,9 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefres
                                             {asset.volatility_level}
                                         </span>
                                     </div>
+                                    <p className="text-xs text-gray-500 mt-1.5 italic">
+                                        {getVolatilityInterpretation(asset.sentiment_score, asset.momentum_score, asset.trend_score)}
+                                    </p>
                                     <p className="text-xs text-gray-600 mt-2">
                                         Updated: {new Date(asset.analysed_at).toLocaleString('en-AU', {
                                             day: '2-digit',
