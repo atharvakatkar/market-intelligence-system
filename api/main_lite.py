@@ -84,7 +84,7 @@ def get_all_assets():
 
 
 @app.get("/asset/{asset_name}")
-def get_asset(asset_name: str, days: int = 30, db: Session = Depends(get_db)):
+def get_asset(asset_name: str, days: int = 30):
     db = SessionLocal()
     try:
         vol = db.execute(
