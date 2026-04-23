@@ -162,6 +162,27 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                     <h2 className="text-lg font-semibold text-white mb-4">
                         Price History (30 days) + 10 Day Forecast
                     </h2>
+                    {/* Time Range Selector */}
+                    <div className="flex gap-2 mb-4 justify-end">
+                        {[
+                            { label: '1M', days: 30 },
+                            { label: '3M', days: 90 },
+                            { label: '6M', days: 180 },
+                            { label: '1Y', days: 365 },
+                        ].map(({ label, days }) => (
+                            <button
+                                key={label}
+                                onClick={() => setPriceRange(days)}
+                                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                                    priceRange === days
+                                        ? 'bg-purple-600 text-white'
+                                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                                }`}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
                     <ResponsiveContainer width="100%" height={250}>
                         <LineChart data={chartData}>
                             <XAxis
