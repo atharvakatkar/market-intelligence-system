@@ -3,10 +3,10 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from datetime import datetime
 import os
 
@@ -84,7 +84,7 @@ def get_all_assets():
 
 
 @app.get("/asset/{asset_name}")
-def get_asset(asset_name: str):
+def get_asset(asset_name: str, days: int = 30, db: Session = Depends(get_db)):
     db = SessionLocal()
     try:
         vol = db.execute(
@@ -108,8 +108,8 @@ def get_asset(asset_name: str):
             SELECT price_date, close_price
             FROM asset_prices
             WHERE asset = :asset
+            AND price_date >= CURRENT_DATE - (:days * INTERVAL '1 day')
             ORDER BY price_date DESC
-            LIMIT 30
         """
             ),
             {"asset": asset_name},

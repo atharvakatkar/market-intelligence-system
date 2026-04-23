@@ -57,12 +57,13 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
     const [accuracy, setAccuracy] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [activePage, setActivePage] = useState<number>(0);
+    const [priceRange, setPriceRange] = useState<number>(30);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const [assetRes, predRes, sentRes, accRes] = await Promise.all([
-                    fetch(`${apiUrl}/asset/${assetName}`),
+                    fetch(`${apiUrl}/asset/${assetName}?days=${priceRange}`),
                     fetch(`${apiUrl}/predictions/${assetName}`),
                     fetch(`${apiUrl}/sentiment/history/${assetName}`),
                     fetch(`${apiUrl}/predictions/accuracy/${assetName}`)
@@ -85,7 +86,7 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
             }
         };
         fetchData();
-    }, [assetName, apiUrl]);
+    }, [assetName, apiUrl, priceRange]);
 
     if (loading) {
         return (
