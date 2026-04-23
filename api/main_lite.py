@@ -103,16 +103,14 @@ def get_asset(asset_name: str, days: int = 30, db: Session = Depends(get_db)):
         ).fetchone()
 
         prices = db.execute(
-            text(
-                """
-            SELECT price_date, close_price
-            FROM asset_prices
-            WHERE asset = :asset
-            AND price_date >= CURRENT_DATE - (:days * INTERVAL '1 day')
-            ORDER BY price_date DESC
-        """
-            ),
-            {"asset": asset_name},
+            text("""
+                SELECT price_date, close_price
+                FROM asset_prices
+                WHERE asset = :asset
+                AND price_date >= CURRENT_DATE - CAST(:days AS INTEGER) * INTERVAL '1 day'
+                ORDER BY price_date DESC
+            """),
+            {"asset": asset_name, "days": days}
         ).fetchall()
 
         headlines = db.execute(
