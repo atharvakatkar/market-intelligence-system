@@ -147,7 +147,7 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefres
                                                 {formatPrice(asset.asset, asset.latest_price)}
                                             </p>
                                             <div className="flex items-center gap-1 justify-end mt-1">
-                                            s    {getMomentumIcon(asset.momentum_score)}
+                                                {getMomentumIcon(asset.momentum_score)}
                                                 <span className="text-xs text-gray-400">momentum</span>
                                             </div>
                                         </div>
