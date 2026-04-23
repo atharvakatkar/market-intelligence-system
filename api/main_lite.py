@@ -389,31 +389,16 @@ def get_sentiment_history(asset_name: str):
 
 @app.get("/lag-analysis")
 def get_lag_analysis():
-    db = SessionLocal()
     try:
+        from aggregator.lag_analysis import calculate_lag_correlation
         assets = ["gold", "silver", "oil", "asx200"]
         results = {}
         for asset in assets:
-            rows = db.execute(
-                text(
-                    """
-                SELECT COUNT(DISTINCT DATE(pipeline_run_at))
-                FROM asset_sentiment_summary
-                WHERE asset = :asset
-            """
-                ),
-                {"asset": asset},
-            ).fetchone()
-            count = rows[0] if rows else 0
-            results[asset] = {
-                "asset": asset,
-                "status": "insufficient_data" if count < 10 else "ok",
-                "rows": count,
-                "lags": {},
-            }
+            result = calculate_lag_correlation(asset)
+            results[asset] = result
         return {"lag_analysis": results, "generated_at": datetime.utcnow().isoformat()}
-    finally:
-        db.close()
+    except Exception as e:
+        return {"error": str(e), "generated_at": datetime.utcnow().isoformat()}
 
 
 @app.get("/pipeline/last-run")
