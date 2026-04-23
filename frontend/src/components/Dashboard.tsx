@@ -147,7 +147,7 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefres
                                                 {formatPrice(asset.asset, asset.latest_price)}
                                             </p>
                                             <div className="flex items-center gap-1 justify-end mt-1">
-                                                {getMomentumIcon(asset.momentum_score)}
+                                            s    {getMomentumIcon(asset.momentum_score)}
                                                 <span className="text-xs text-gray-400">momentum</span>
                                             </div>
                                         </div>
@@ -167,6 +167,15 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefres
                                             {asset.volatility_level}
                                         </span>
                                     </div>
+                                    <p className="text-xs text-gray-600 mt-2">
+                                        Updated: {new Date(asset.analysed_at).toLocaleString('en-AU', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}
+                                    </p>
                                 </div>
                             ))}
                         </div>
