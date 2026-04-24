@@ -147,7 +147,7 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
         };
 
         generateAnalysis();
-    }, [data]);
+    }, [data, assetName]);
 
     if (loading) {
         return (
