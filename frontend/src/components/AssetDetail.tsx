@@ -58,6 +58,8 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
     const [loading, setLoading] = useState(true);
     const [activePage, setActivePage] = useState<number>(0);
     const [priceRange, setPriceRange] = useState<number>(30);
+    const [aiAnalysis, setAiAnalysis] = useState<string>('');
+    const [aiLoading, setAiLoading] = useState<boolean>(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -87,6 +89,65 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
         };
         fetchData();
     }, [assetName, apiUrl, priceRange]);
+
+    useEffect(() => {
+        if (!data) return;
+
+        const generateAnalysis = async () => {
+            setAiLoading(true);
+            try {
+                const recentSentiment = data.sentiment_trend?.slice(0, 5) || [];
+                const avgNegative = recentSentiment.length > 0
+                    ? (recentSentiment.reduce((sum: number, s: any) => sum + s.negative_pct, 0) / recentSentiment.length * 100).toFixed(1)
+                    : 'N/A';
+                const avgPositive = recentSentiment.length > 0
+                    ? (recentSentiment.reduce((sum: number, s: any) => sum + s.positive_pct, 0) / recentSentiment.length * 100).toFixed(1)
+                    : 'N/A';
+
+                const recentHeadlines = (data.headlines || [])
+                    .slice(0, 5)
+                    .map((h: any) => `"${h.headline}" (${h.sentiment})`)
+                    .join(', ');
+
+                const prompt = `You are a financial risk analyst. Given the following data for ${ASSET_LABELS[assetName]}, write a 2-3 sentence plain English analysis of the current market situation. Be specific, reference the actual numbers, and keep it professional but accessible. Do not use bullet points.
+
+    Data:
+    - Volatility level: ${data.volatility?.level} (score: ${(data.volatility?.score * 100).toFixed(1)}%)
+    - Sentiment score: ${(data.volatility?.sentiment_score * 100).toFixed(1)}% negative
+    - Price momentum score: ${(data.volatility?.momentum_score * 100).toFixed(1)}%
+    - Sentiment trend score: ${(data.volatility?.trend_score * 100).toFixed(1)}%
+    - Average negative sentiment (last 5 pipeline runs): ${avgNegative}%
+    - Average positive sentiment (last 5 pipeline runs): ${avgPositive}%
+    - Recent headlines: ${recentHeadlines}
+
+    Write the analysis now:`;
+
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${process.env.REACT_APP_GROQ_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'llama-3.3-70b-versatile',
+                        max_tokens: 150,
+                        temperature: 0.4,
+                        messages: [{ role: 'user', content: prompt }]
+                    })
+                });
+
+                const json = await response.json();
+                const text = json.choices?.[0]?.message?.content?.trim();
+                if (text) setAiAnalysis(text);
+            } catch (err) {
+                console.error('Groq analysis failed:', err);
+            } finally {
+                setAiLoading(false);
+            }
+        };
+
+        generateAnalysis();
+    }, [data]);
 
     if (loading) {
         return (
@@ -155,6 +216,23 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                     ))}
                 </div>
             )}
+
+            {/* AI Generated Analysis */}
+            <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 mb-8">
+                <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs text-blue-400 uppercase tracking-wider font-semibold">AI Analysis</span>
+                </div>
+                {aiLoading ? (
+                    <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
+                        <p className="text-xs text-gray-500 italic">Generating analysis...</p>
+                    </div>
+                ) : aiAnalysis ? (
+                    <p className="text-sm text-gray-300 leading-relaxed">{aiAnalysis}</p>
+                ) : (
+                    <p className="text-xs text-gray-500 italic">Analysis unavailable</p>
+                )}
+            </div>
 
             {/* Price Chart */}
             {priceData.length > 0 && (
