@@ -37,7 +37,9 @@ const CustomTooltip = ({ active, payload, label, assetName }: any) => {
 
     return (
         <div style={{ backgroundColor: '#111827', border: '1px solid #374151', padding: '8px 12px' }}>
-            <p style={{ color: '#9ca3af', marginBottom: 4 }}>{label}</p>
+            <p style={{ color: '#9ca3af', marginBottom: 4 }}>
+                {new Date(label + 'T00:00:00').toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+            </p>
             {validItems.map((item: any) => (
                 <p key={item.name} style={{ color: '#fff', margin: 0 }}>
                     {item.name === 'audPrice' ? 'Actual' : 'Forecast'}: {
@@ -266,7 +268,10 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                             <XAxis
                                 dataKey="date"
                                 tick={{ fill: '#6b7280', fontSize: 11 }}
-                                tickFormatter={(val) => val.slice(5)}
+                                tickFormatter={(val) => {
+                                    const d = new Date(val + 'T00:00:00');
+                                    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                                }}
                             />
                             <YAxis
                                 tick={{ fill: '#6b7280', fontSize: 11 }}
@@ -314,7 +319,10 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                             <XAxis
                                 dataKey="date"
                                 tick={{ fill: '#6b7280', fontSize: 11 }}
-                                tickFormatter={(val) => val.slice(5)}
+                                tickFormatter={(val) => {
+                                    const d = new Date(val + 'T00:00:00');
+                                    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                                }}
                             />
                             <YAxis
                                 tick={{ fill: '#6b7280', fontSize: 11 }}
@@ -483,7 +491,9 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                                 <tbody>
                                     {currentRows.map((p: any, i: number) => (
                                         <tr key={i} className="border-b border-gray-800 last:border-0">
-                                            <td className="py-2 text-gray-300">{p.date}</td>
+                                            <td className="py-2 text-gray-300">
+                                                {new Date(p.date + 'T00:00:00').toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                            </td>
                                             <td className="py-2 text-right text-gray-300">
                                                 {formatPrice(p.predicted_price)}
                                             </td>

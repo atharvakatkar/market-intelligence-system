@@ -42,7 +42,13 @@ function App() {
             if (rateData.usd_aud) setAudRate(rateData.usd_aud);
             if (lagData.lag_analysis) setLagAnalysis(lagData.lag_analysis);
             setLastPipelineRun(pipelineData);
-            setLastUpdated(new Date().toLocaleTimeString());
+            setLastUpdated(new Date().toLocaleString('en-AU', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }));
             setLoading(false);
         } catch (error) {
             console.error('Failed to fetch data:', error);
