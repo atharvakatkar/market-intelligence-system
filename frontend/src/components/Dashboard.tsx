@@ -88,16 +88,6 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefres
     const getAssetsByDomain = (domain: string) =>
         assets.filter(a => ASSET_DOMAINS[a.asset] === domain);
 
-    const formatPrice = (asset: string, price: number) => {
-        if (asset === 'asx200') {
-            return `${price.toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts`;
-        }
-        const audPrice = audRate ? price * audRate : null;
-        return audPrice
-            ? `AU$${audPrice.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / US$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-            : `US$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    };
-
     const getMomentumIcon = (score: number) => {
         if (score > 0.55) return <TrendingDown className="w-4 h-4 text-red-400" />;
         if (score < 0.45) return <TrendingUp className="w-4 h-4 text-green-400" />;
