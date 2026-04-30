@@ -22,25 +22,21 @@ function App() {
     const [loading, setLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState<string>('');
     const [audRate, setAudRate] = useState<number | null>(null);
-    const [setLagAnalysis] = useState<any>(null);
     const [lastPipelineRun, setLastPipelineRun] = useState<any>(null);
 
 
     const fetchAssets = async () => {
         try {
-            const [assetsRes, rateRes, lagRes, pipelineRes] = await Promise.all([
+            const [assetsRes, rateRes, pipelineRes] = await Promise.all([
                 fetch(`${API_URL}/assets`),
                 fetch(`${API_URL}/exchange-rate`),
-                fetch(`${API_URL}/lag-analysis`),
                 fetch(`${API_URL}/pipeline/last-run`)
             ]);
             const assetsData = await assetsRes.json();
             const rateData = await rateRes.json();
-            const lagData = await lagRes.json();
             const pipelineData = await pipelineRes.json();
             setAssets(assetsData.assets);
             if (rateData.usd_aud) setAudRate(rateData.usd_aud);
-            if (lagData.lag_analysis) setLagAnalysis(lagData.lag_analysis);
             setLastPipelineRun(pipelineData);
             setLastUpdated(new Date().toLocaleString('en-AU', {
                 day: '2-digit',
@@ -56,6 +52,7 @@ function App() {
         }
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         fetchAssets();
         const interval = setInterval(fetchAssets, 30000);
