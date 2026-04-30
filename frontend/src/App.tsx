@@ -22,7 +22,7 @@ function App() {
     const [loading, setLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState<string>('');
     const [audRate, setAudRate] = useState<number | null>(null);
-    const [lagAnalysis, setLagAnalysis] = useState<any>(null);
+    const [setLagAnalysis] = useState<any>(null);
     const [lastPipelineRun, setLastPipelineRun] = useState<any>(null);
 
 
