@@ -89,7 +89,6 @@ function App() {
                     onSelectAsset={setSelectedAsset}
                     onRefresh={fetchAssets}
                     audRate={audRate}
-                    lagAnalysis={lagAnalysis}
                     lastPipelineRun={lastPipelineRun}
                 />
             )}

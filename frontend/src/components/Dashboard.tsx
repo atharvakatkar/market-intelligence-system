@@ -1,5 +1,5 @@
-import React from 'react';
-import { RefreshCw, TrendingUp, TrendingDown, Minus, Activity, BarChart2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { RefreshCw, TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
 import { Asset } from '../App';
 
 interface DashboardProps {
@@ -8,7 +8,6 @@ interface DashboardProps {
     onSelectAsset: (asset: string) => void;
     onRefresh: () => void;
     audRate: number | null;
-    lagAnalysis: any;
     lastPipelineRun: any;
 }
 
@@ -49,7 +48,43 @@ const LEVEL_TEXT: Record<string, string> = {
 
 const DOMAINS = ['Precious Metals', 'Energy', 'Equity Markets'];
 
-export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefresh, audRate, lagAnalysis, lastPipelineRun }: DashboardProps) {
+export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefresh, audRate, lastPipelineRun }: DashboardProps) {
+    const [clockDisplay, setClockDisplay] = useState<string>('');
+    const [clockDay, setClockDay] = useState<string>('');
+    const [publicHoliday, setPublicHoliday] = useState<string | null>(null);
+
+    // Live clock — ticks every second
+    useEffect(() => {
+        const tick = () => {
+            const now = new Date();
+            const display = now.toLocaleDateString('en-AU', {
+                day: '2-digit', month: '2-digit', year: 'numeric'
+            }) + ', ' + now.toLocaleTimeString('en-AU', {
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+            });
+            const day = now.toLocaleDateString('en-AU', { weekday: 'long' });
+            setClockDisplay(display);
+            setClockDay(day);
+        };
+        tick();
+        const interval = setInterval(tick, 1000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Public holiday fetch — once on mount
+    useEffect(() => {
+        const today = new Date();
+        const year = today.getFullYear();
+        fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/AU`)
+            .then(res => res.json())
+            .then((holidays: any[]) => {
+                const todayStr = today.toISOString().split('T')[0];
+                const match = holidays.find(h => h.date === todayStr);
+                setPublicHoliday(match ? match.localName : null);
+            })
+            .catch(() => setPublicHoliday(null));
+    }, []);
+    
     const getAssetsByDomain = (domain: string) =>
         assets.filter(a => ASSET_DOMAINS[a.asset] === domain);
 
@@ -93,17 +128,28 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefres
         : 0;
 
     return (
-        <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="max-w-7xl mx-auto px-4 py-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
+                {/* Left — title */}
                 <div>
                     <h1 className="text-3xl font-bold text-white">Market Intelligence</h1>
                     <p className="text-gray-400 mt-1">Multi-agent sentiment and volatility analysis</p>
                 </div>
+
+                {/* Centre — live clock */}
+                <div className="text-center">
+                    <p className="text-lg font-mono font-semibold text-white">{clockDisplay}</p>
+                    <p className="text-sm text-gray-400 mt-0.5">
+                        {clockDay}{publicHoliday ? `, ${publicHoliday}` : ''}
+                    </p>
+                </div>
+
+                {/* Right — refresh controls */}
                 <div className="flex items-center gap-4">
                     <div className="text-right">
                         <p className="text-xs text-gray-500">Dashboard refreshed</p>
-                        <p className="text-sm text-gray-300">{lastUpdated}</p>
+                        <p className="text-xs text-gray-400">{lastUpdated}</p>
                         {lastPipelineRun?.minutes_ago !== null && (
                             <p className="text-xs text-gray-500 mt-1">
                                 Pipeline: {lastPipelineRun?.minutes_ago < 60
@@ -162,9 +208,20 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefres
                                             <p className="text-xs text-gray-500">{ASSET_SYMBOLS[asset.asset]}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-xl font-bold text-white">
-                                                {formatPrice(asset.asset, asset.latest_price)}
-                                            </p>
+                                            {asset.asset === 'asx200' ? (
+                                                <p className="text-xl font-bold text-white">
+                                                    {asset.latest_price?.toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts
+                                                </p>
+                                            ) : (
+                                                <div className="text-right">
+                                                    <p className="text-base font-bold text-white">
+                                                        AU${audRate ? (asset.latest_price * audRate).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
+                                                    </p>
+                                                    <p className="text-sm text-gray-400">
+                                                        US${asset.latest_price?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    </p>
+                                                </div>
+                                            )}
                                             <div className="flex items-center gap-1 justify-end mt-1">
                                                 {getMomentumIcon(asset.momentum_score)}
                                                 <span className="text-xs text-gray-400">momentum</span>
@@ -204,49 +261,6 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefres
                     </div>
                 );
             })}
-            {/* Lag Analysis */}
-            <div className="mt-8">
-                <div className="flex items-center gap-2 mb-4">
-                    <BarChart2 className="w-5 h-5 text-blue-400" />
-                    <h2 className="text-lg font-semibold text-gray-300 uppercase tracking-wider text-sm">
-                        Sentiment — Price Lag Analysis
-                    </h2>
-                </div>
-                <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
-                    {lagAnalysis ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {Object.entries(lagAnalysis).map(([asset, data]: [string, any]) => (
-                                <div key={asset} className="border border-gray-800 rounded-lg p-4">
-                                    <h3 className="text-white font-semibold mb-2">{ASSET_LABELS[asset]}</h3>
-                                    {data.status === 'insufficient_data' ? (
-                                        <div>
-                                            <p className="text-gray-500 text-sm italic">
-                                                Insufficient data — need 10+ days of pipeline runs
-                                            </p>
-                                            <div className="mt-2 w-full bg-gray-800 rounded-full h-1.5">
-                                                <div
-                                                    className="h-1.5 rounded-full bg-blue-500"
-                                                    style={{ width: `${Math.min((data.rows / 10) * 100, 100)}%` }}
-                                                />
-                                            </div>
-                                            <p className="text-xs text-gray-600 mt-1">{data.rows}/10 days collected</p>
-                                        </div>
-                                    ) : (
-                                        <div>
-                                            <p className="text-sm text-gray-300">{data.interpretation}</p>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                Best lag: {data.best_lag} — correlation: {data.best_correlation}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-gray-500 text-sm">Loading lag analysis...</p>
-                    )}
-                </div>
-            </div>
         </div>
     );
 }

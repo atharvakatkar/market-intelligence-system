@@ -62,20 +62,23 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
     const [priceRange, setPriceRange] = useState<number>(30);
     const [aiAnalysis, setAiAnalysis] = useState<string>('');
     const [aiLoading, setAiLoading] = useState<boolean>(false);
+    const [lagData, setLagData] = useState<any>(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [assetRes, predRes, sentRes, accRes] = await Promise.all([
+                const [assetRes, predRes, sentRes, accRes, lagRes] = await Promise.all([
                     fetch(`${apiUrl}/asset/${assetName}?days=${priceRange}`),
                     fetch(`${apiUrl}/predictions/${assetName}`),
                     fetch(`${apiUrl}/sentiment/history/${assetName}`),
-                    fetch(`${apiUrl}/predictions/accuracy/${assetName}`)
+                    fetch(`${apiUrl}/predictions/accuracy/${assetName}`),
+                    fetch(`${apiUrl}/lag-analysis`)
                 ]);
                 const assetJson = await assetRes.json();
                 const predJson = await predRes.json();
                 const sentJson = await sentRes.json();
                 const accJson = await accRes.json();
+                const lagJson = await lagRes.json();
                 setData({
                     ...assetJson,
                     predictions: predJson.predictions || [],
@@ -83,6 +86,7 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                 });
                 setSentimentHistory(sentJson.history || []);
                 setAccuracy(accJson);
+                setLagData(lagJson.lag_analysis?.[assetName] || null);
                 setLoading(false);
             } catch (error) {
                 console.error('Failed to fetch asset data:', error);
@@ -169,18 +173,34 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
         predictedPrice: null
     }));
 
-    const predictionData = (data.predictions || []).map((p: any) => ({
-        date: p.date,
-        audPrice: null,
-        predictedPrice: audRate && assetName !== 'asx200'
-            ? parseFloat((p.predicted_price * audRate).toFixed(2))
-            : p.predicted_price
-    }));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    const chartData = [...priceData, ...predictionData];
+    const predictionData = (data.predictions || []).map((p: any) => {
+        const predDate = new Date(p.date + 'T00:00:00');
+        const isPast = predDate < today;
+        const price = audRate && assetName !== 'asx200'
+            ? parseFloat((p.predicted_price * audRate).toFixed(2))
+            : p.predicted_price;
+        const actualPrice = p.actual_price
+            ? (audRate && assetName !== 'asx200'
+                ? parseFloat((p.actual_price * audRate).toFixed(2))
+                : p.actual_price)
+            : null;
+
+        return {
+            date: p.date,
+            audPrice: isPast && actualPrice ? actualPrice : null,
+            predictedPrice: isPast ? null : price
+        };
+    });
+
+    const chartData = [...priceData, ...predictionData].sort((a, b) =>
+        new Date(a.date + 'T00:00:00').getTime() - new Date(b.date + 'T00:00:00').getTime()
+    );
 
     return (
-        <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="max-w-6xl mx-auto px-4 py-6">
             {/* Header */}
             <div className="flex items-center gap-4 mb-8">
                 <button
@@ -198,24 +218,50 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
             {/* Volatility Summary */}
             {vol && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    {[
-                        {
-                            label: 'Current Price',
-                            value: assetName === 'asx200'
-                                ? `${vol.latest_price?.toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts`
-                                : audRate
-                                    ? `AU$${(vol.latest_price * audRate).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / US$${vol.latest_price?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                    : `US$${vol.latest_price?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                        },
-                        { label: 'Volatility Score', value: `${(vol.score * 100).toFixed(1)}%` },
-                        { label: 'Risk Level', value: vol.level },
-                        { label: 'Sentiment Score', value: `${(vol.sentiment_score * 100).toFixed(1)}%` }
-                    ].map(item => (
-                        <div key={item.label} className="bg-gray-900 rounded-xl p-4 border border-gray-800">
-                            <p className="text-xs text-gray-500 mb-1">{item.label}</p>
-                            <p className="text-xl font-bold text-white">{item.value}</p>
-                        </div>
-                    ))}
+                    {/* Current Price — two line */}
+                    <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+                        <p className="text-xs text-gray-500 mb-1">Current Price</p>
+                        {assetName === 'asx200' ? (
+                            <p className="text-xl font-bold text-white">
+                                {vol.latest_price?.toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts
+                            </p>
+                        ) : (
+                            <div>
+                                <p className="text-xl font-bold text-white">
+                                    AU${audRate ? (vol.latest_price * audRate).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
+                                </p>
+                                <p className="text-sm text-gray-400">
+                                    US${vol.latest_price?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                    {/* Volatility Score */}
+                    <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+                        <p className="text-xs text-gray-500 mb-1">Volatility Score</p>
+                        <p className="text-xl font-bold text-white">{(vol.score * 100).toFixed(1)}%</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                            {vol.score < 0.35 ? 'Low market stress — conditions stable'
+                            : vol.score < 0.50 ? 'Moderate stress — monitor closely'
+                            : vol.score < 0.65 ? 'Elevated stress — high risk environment'
+                            : 'Critical stress — extreme risk conditions'}
+                        </p>
+                    </div>
+                    {/* Risk Level */}
+                    <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+                        <p className="text-xs text-gray-500 mb-1">Risk Level</p>
+                        <p className="text-xl font-bold text-white">{vol.level}</p>
+                    </div>
+                    {/* Sentiment Score */}
+                    <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+                        <p className="text-xs text-gray-500 mb-1">Sentiment Score</p>
+                        <p className="text-xl font-bold text-white">{(vol.sentiment_score * 100).toFixed(1)}%</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                            {vol.sentiment_score < 0.25 ? 'Mostly positive news sentiment'
+                            : vol.sentiment_score < 0.45 ? 'Mixed sentiment — moderate negativity'
+                            : 'Predominantly negative news sentiment'}
+                        </p>
+                    </div>
                 </div>
             )}
 
@@ -236,11 +282,77 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                 )}
             </div>
 
+            {/* Sentiment — Price Lag Analysis */}
+            <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 mb-8">
+                <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs text-blue-400 uppercase tracking-wider font-semibold">
+                        Sentiment — Price Lag Analysis
+                    </span>
+                </div>
+                {!lagData ? (
+                    <p className="text-xs text-gray-500 italic">Loading lag analysis...</p>
+                ) : lagData.status === 'insufficient_data' ? (
+                    <div>
+                        <p className="text-sm text-gray-400 mb-3">
+                            Lag analysis measures whether news sentiment today predicts price movement in the days ahead.
+                            More pipeline data is needed to calculate a reliable signal.
+                        </p>
+                        <div className="w-full bg-gray-800 rounded-full h-1.5">
+                            <div
+                                className="h-1.5 rounded-full bg-blue-500"
+                                style={{ width: `${Math.min((lagData.rows / 10) * 100, 100)}%` }}
+                            />
+                        </div>
+                        <p className="text-xs text-gray-600 mt-1">{lagData.rows}/10 days collected</p>
+                    </div>
+                ) : (
+                    <div>
+                        <p className="text-sm text-gray-400 mb-3">
+                            This measures how many days after a shift in news sentiment a price movement tends to follow.
+                            A <span className="text-gray-300 font-medium">contrarian signal</span> means negative sentiment 
+                            precedes price rises — typical in commodity markets where bad news triggers overselling, 
+                            followed by a recovery bounce. A <span className="text-gray-300 font-medium">directional signal</span> means 
+                            negative sentiment precedes price falls — sentiment and price move in the same direction.
+                            Correlations above 0.3 are considered meaningful at this data volume.
+                        </p>
+                        <div className="grid grid-cols-3 gap-4 mt-3">
+                            <div>
+                                <p className="text-xs text-gray-500">Best Lag</p>
+                                <p className="text-base font-bold text-white">
+                                    {parseInt(lagData.best_lag.replace('lag_', '').replace('d', ''))} {parseInt(lagData.best_lag.replace('lag_', '').replace('d', '')) === 1 ? 'day' : 'days'}
+                                </p>
+                                <p className="text-xs text-gray-500">sentiment leads price by this many days</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500">Correlation</p>
+                                <p className="text-base font-bold text-white">{lagData.best_correlation}</p>
+                                <p className="text-xs text-gray-500">
+                                    {Math.abs(lagData.best_correlation) < 0.2 ? 'weak signal'
+                                    : Math.abs(lagData.best_correlation) < 0.4 ? 'moderate signal'
+                                    : 'strong signal'}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500">Signal Type</p>
+                                <p className="text-base font-bold text-white">
+                                    {lagData.best_correlation >= 0 ? 'Contrarian' : 'Directional'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    {lagData.best_correlation >= 0
+                                        ? 'negative sentiment precedes price rises'
+                                        : 'negative sentiment precedes price falls'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
             {/* Price Chart */}
             {priceData.length > 0 && (
                 <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 mb-6">
                     <h2 className="text-lg font-semibold text-white mb-4">
-                        Price History (30 days) + 10 Day Forecast
+                        Price History + 5 Day Forecast
                     </h2>
                     {/* Time Range Selector */}
                     <div className="flex gap-2 mb-4 justify-end">
@@ -286,7 +398,7 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                                 strokeWidth={2}
                                 dot={{ r: 3, fill: vol ? COLOR_MAP[vol.color] : '#3b82f6' }}
                                 activeDot={{ r: 5 }}
-                                connectNulls={false}
+                                connectNulls={true}
                                 name="audPrice"
                             />
                             <Line
@@ -511,7 +623,9 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                                                     : <span className="text-gray-600 italic">—</span>
                                                 }
                                             </td>
-                                            <td className="py-2 text-right text-gray-500">{p.model_r2}</td>
+                                            <td className="py-2 text-right text-gray-500">
+                                                {p.actual_price ? p.model_r2 : <span className="text-gray-600 italic">—</span>}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
