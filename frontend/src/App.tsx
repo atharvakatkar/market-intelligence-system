@@ -30,19 +30,24 @@ function App() {
 
     const fetchAssets = async () => {
         try {
-            const [assetsRes, rateRes, pipelineRes, audInrRes] = await Promise.all([
+            const [assetsRes, rateRes, pipelineRes] = await Promise.all([
                 fetch(`${API_URL}/assets`),
                 fetch(`${API_URL}/exchange-rate`),
-                fetch(`${API_URL}/pipeline/last-run`),
-                fetch(`${API_URL}/exchange-rates/audinr`)
+                fetch(`${API_URL}/pipeline/last-run`)
             ]);
             const assetsData = await assetsRes.json();
             const rateData = await rateRes.json();
             const pipelineData = await pipelineRes.json();
-            const audInrData = await audInrRes.json();
+            let audInrData = null;
+            try {
+                const audInrRes = await fetch(`${API_URL}/exchange-rates/audinr`);
+                audInrData = await audInrRes.json();
+            } catch (e) {
+                console.warn('AUD/INR rate fetch failed, will retry on next refresh');
+            }
             setAssets(assetsData.assets);
             if (rateData.usd_aud) setAudRate(rateData.usd_aud);
-            if (audInrData.current_rate) setAudInrRate(audInrData.current_rate);
+            if (audInrData?.current_rate) setAudInrRate(audInrData.current_rate);
             setLastPipelineRun(pipelineData);
             setLastUpdated(new Date().toLocaleString('en-AU', {
                 day: '2-digit',
