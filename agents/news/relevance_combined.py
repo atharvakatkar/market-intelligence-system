@@ -6,6 +6,14 @@ SEMANTIC_WEIGHT = 0.6
 
 RELEVANCE_THRESHOLD = 0.35
 
+ASSET_THRESHOLDS = {
+    "gold": 0.35,
+    "silver": 0.35,
+    "oil": 0.35,
+    "asx200": 0.35,
+    "audinr": 0.38,
+}
+
 
 def combined_relevance(headline: str) -> dict:
     keyword_scores = score_headline_keywords(headline)
@@ -20,7 +28,7 @@ def combined_relevance(headline: str) -> dict:
             "keyword": keyword,
             "semantic": semantic,
             "combined": score,
-            "relevant": score >= RELEVANCE_THRESHOLD,
+            "relevant": score >= ASSET_THRESHOLDS.get(asset, RELEVANCE_THRESHOLD),
         }
     return combined
 

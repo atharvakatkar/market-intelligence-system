@@ -11,6 +11,7 @@ from agents.banking.rba_agent import run_rba_agent
 from agents.banking.worldbank_agent import run_worldbank_agent
 from agents.commodities.kitco_agent import run_kitco_agent
 from agents.oil.oil_agent import run_oil_agent
+from agents.india.india_agent import run_india_agent
 from database.writer import (
     save_asset_prices,
     save_headlines_and_sentiment,
@@ -41,6 +42,7 @@ def run_full_pipeline():
     all_results.extend(run_worldbank_agent())
     all_results.extend(run_kitco_agent())
     all_results.extend(run_oil_agent())
+    all_results.extend(run_india_agent())
 
     # Step 3 — Scrape and process general news
     print("\n[3/4] Scraping general news...")
@@ -80,7 +82,7 @@ def run_full_pipeline():
     save_volatility_scores(volatility_scores)
 
     # Step 6 — Generate and save predictions
-    for asset in ["gold", "silver", "oil", "asx200"]:
+    for asset in ["gold", "silver", "oil", "asx200", "audinr"]:
         pred_result = train_and_predict(asset)
         if pred_result["status"] == "ok":
             save_predictions(asset, pred_result["predictions"], pred_result["model_r2"])

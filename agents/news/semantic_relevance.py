@@ -22,6 +22,16 @@ ASSET_DESCRIPTIONS = {
         Strait of Hormuz blockades, refinery capacity, US shale production, global demand, 
         China economic activity, and energy policy decisions.
     """,
+    "audinr": """
+        The AUD/INR exchange rate measures Australian dollars against Indian rupees. It is
+        driven by Reserve Bank of India foreign exchange interventions, rupee depreciation
+        or appreciation, dollar rupee movements, Indian inflation data, RBI interest rate
+        decisions, India current account deficit, forex reserves, capital outflows,
+        remittance flows, Australian dollar strength, and currency market movements.
+        Relevant headlines mention rupee, INR, forex, exchange rate, RBI policy, or
+        currency depreciation. Stock market, equity, and company earnings headlines
+        are not relevant unless they directly reference currency or exchange rate impact.
+    """,
     "asx200": """
         The ASX200 is the Australian stock market index. It is sensitive to Reserve Bank of 
         Australia interest rate decisions, Australian inflation, Chinese economic activity, 

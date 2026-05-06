@@ -6,7 +6,8 @@ ASSETS = {
     "gold": "GC=F",
     "silver": "SI=F",
     "oil": "CL=F",
-    "asx200": "^AXJO"
+    "asx200": "^AXJO",
+    "audinr": "AUDINR=X"
 }
 
 def fetch_historical_prices(period="6mo", interval="1d"):
