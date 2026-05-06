@@ -391,7 +391,7 @@ def get_sentiment_history(asset_name: str):
 def get_lag_analysis():
     try:
         from aggregator.lag_analysis import calculate_lag_correlation
-        assets = ["gold", "silver", "oil", "asx200"]
+        assets = ["gold", "silver", "oil", "asx200", "audinr"]
         results = {}
         for asset in assets:
             result = calculate_lag_correlation(asset)
@@ -422,6 +422,65 @@ def get_last_run():
         return {
             "last_run": last_run.isoformat() if last_run else None,
             "minutes_ago": minutes_ago,
+        }
+    finally:
+        db.close()
+
+
+@app.get("/exchange-rates/audinr")
+def get_audinr_rate():
+    db = SessionLocal()
+    try:
+        results = db.execute(
+            text("""
+            SELECT price_date, close_price
+            FROM asset_prices
+            WHERE asset = 'audinr'
+            ORDER BY price_date DESC
+            LIMIT 30
+        """)
+        ).fetchall()
+        if not results:
+            return {"error": "No AUDINR data available"}
+        latest = results[0]
+        history = [
+            {"date": str(r[0]), "rate": round(float(r[1]), 4)}
+            for r in reversed(results)
+        ]
+        return {
+            "asset": "audinr",
+            "current_rate": round(float(latest[1]), 4),
+            "date": str(latest[0]),
+            "history": history,
+        }
+    finally:
+        db.close()
+
+
+@app.get("/volatility/history/audinr")
+def get_audinr_volatility_history():
+    db = SessionLocal()
+    try:
+        results = db.execute(
+            text("""
+            SELECT calculated_at, volatility_score, volatility_level, color
+            FROM volatility_scores
+            WHERE asset = 'audinr'
+            ORDER BY calculated_at DESC
+            LIMIT 48
+        """)
+        ).fetchall()
+        return {
+            "asset": "audinr",
+            "history": [
+                {
+                    "calculated_at": r[0].isoformat() if r[0] else None,
+                    "volatility_score": round(float(r[1]), 4),
+                    "volatility_level": r[2],
+                    "color": r[3],
+                }
+                for r in results
+            ],
         }
     finally:
         db.close()

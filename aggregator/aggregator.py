@@ -163,7 +163,7 @@ def calculate_volatility_score(asset: str) -> dict:
 
 def run_aggregator() -> dict:
     print("\n[AGGREGATOR] Calculating volatility scores...")
-    assets = ["gold", "silver", "oil", "asx200"]
+    assets = ["gold", "silver", "oil", "asx200", "audinr"]
     results = {}
     for asset in assets:
         result = calculate_volatility_score(asset)

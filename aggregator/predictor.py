@@ -134,7 +134,7 @@ def train_and_predict(asset: str, forecast_days: int = 5) -> dict:
 
 
 if __name__ == "__main__":
-    for asset in ["gold", "silver", "oil", "asx200"]:
+    for asset in ["gold", "silver", "oil", "asx200", "audinr"]:
         result = train_and_predict(asset)
         print(f"\n{asset.upper()} — R² {result.get('model_r2')}")
         for p in result.get("predictions", []):
