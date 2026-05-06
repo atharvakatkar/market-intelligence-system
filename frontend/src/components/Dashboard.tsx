@@ -6,6 +6,8 @@ interface DashboardProps {
     assets: Asset[];
     lastUpdated: string;
     onSelectAsset: (asset: string) => void;
+    onSelectAudInr: () => void;
+    audInrRate: number | null;
     onRefresh: () => void;
     audRate: number | null;
     lastPipelineRun: any;
@@ -48,7 +50,7 @@ const LEVEL_TEXT: Record<string, string> = {
 
 const DOMAINS = ['Precious Metals', 'Energy', 'Equity Markets'];
 
-export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefresh, audRate, lastPipelineRun }: DashboardProps) {
+export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelectAudInr, onRefresh, audRate, audInrRate, lastPipelineRun }: DashboardProps) {
     const [clockDisplay, setClockDisplay] = useState<string>('');
     const [clockDay, setClockDay] = useState<string>('');
     const [publicHoliday, setPublicHoliday] = useState<string | null>(null);
@@ -251,6 +253,31 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onRefres
                     </div>
                 );
             })}
+
+            {/* AUD/INR Currency Intelligence */}
+            <div className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-300 mb-4 uppercase tracking-wider text-sm">Currency Intelligence</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div
+                        onClick={onSelectAudInr}
+                        className="bg-gray-900 rounded-xl p-5 border-l-4 border-blue-500 cursor-pointer hover:bg-gray-800 transition-all"
+                    >
+                        <div className="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 className="text-lg font-bold text-white">AUD / INR</h3>
+                                <p className="text-xs text-gray-500">Australian Dollar to Indian Rupee</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-base font-bold text-white">
+                                    ₹{audInrRate ? audInrRate.toFixed(2) : '—'}
+                                </p>
+                                <p className="text-sm text-gray-400">per 1 AUD</p>
+                            </div>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2">Click to view transfer intelligence, rate forecast and sentiment analysis</p>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
