@@ -428,6 +428,10 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                             />
                         </LineChart>
                     </ResponsiveContainer>
+                    <div className="flex gap-4 mt-2">
+                        <div className="flex items-center gap-2"><div className="w-4 h-0.5 bg-blue-500"></div><span className="text-gray-400 text-xs">Actual Price</span></div>
+                        <div className="flex items-center gap-2"><div className="w-4 h-0.5 bg-purple-500" style={{ borderTop: '2px dashed #a855f7', background: 'none' }}></div><span className="text-gray-400 text-xs">Forecast</span></div>
+                    </div>
                     {data.disclaimer && (
                         <p className="text-xs text-gray-500 mt-3 italic">{data.disclaimer}</p>
                     )}
