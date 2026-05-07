@@ -185,9 +185,6 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
                 if (domainAssets.length === 0) return null;
                 return (
                     <div key={domain} className="mb-8">
-                        <h2 className="text-lg font-semibold text-gray-300 mb-4 uppercase tracking-wider text-sm">
-                            {domain}
-                        </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {domainAssets.map(asset => (
                                 <div
@@ -257,7 +254,6 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
 
             {/* AUD/INR Currency Intelligence */}
             <div className="mb-8">
-                <h2 className="text-lg font-semibold text-gray-300 mb-4 uppercase tracking-wider text-sm">Currency Intelligence</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div
                         onClick={onSelectAudInr}
