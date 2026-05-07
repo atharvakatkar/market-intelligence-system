@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { RefreshCw, TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
 import { Asset } from '../App';
 import Aurora from './Aurora';
+import BorderGlow from './BorderGlow';
 
 interface DashboardProps {
     assets: Asset[];
@@ -197,8 +198,16 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
                     <div key={domain} className="mb-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {domainAssets.map(asset => (
-                                <div
+                                <BorderGlow
                                     key={asset.asset}
+                                    backgroundColor="#111827"
+                                    borderRadius={12}
+                                    glowColor="40 80 80"
+                                    colors={['#c084fc', '#f472b6', '#38bdf8']}
+                                    glowIntensity={1}
+                                    coneSpread={25}
+                                >
+                                <div
                                     onClick={() => onSelectAsset(asset.asset)}
                                     className={`bg-gray-900 rounded-xl p-5 border-l-4 ${COLOR_CLASSES[asset.color]?.split(' ')[0]} cursor-pointer hover:bg-gray-800 transition-all`}
                                 >
@@ -256,6 +265,7 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
                                         })}
                                     </p>
                                 </div>
+                            </BorderGlow>
                             ))}
                         </div>
                     </div>
