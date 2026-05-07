@@ -428,7 +428,7 @@ def get_last_run():
 
 
 @app.get("/exchange-rates/audinr")
-def get_audinr_rate():
+def get_audinr_rate(days: int = 30):
     db = SessionLocal()
     try:
         results = db.execute(
@@ -436,9 +436,10 @@ def get_audinr_rate():
             SELECT price_date, close_price
             FROM asset_prices
             WHERE asset = 'audinr'
+            AND price_date >= CURRENT_DATE - (:days * INTERVAL '1 day')
             ORDER BY price_date DESC
-            LIMIT 30
-        """)
+        """),
+            {"days": days}
         ).fetchall()
         if not results:
             return {"error": "No AUDINR data available"}

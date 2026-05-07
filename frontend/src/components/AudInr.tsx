@@ -95,7 +95,7 @@ export default function AudInr({ apiUrl, onBack }: AudInrProps) {
         const fetchData = async () => {
             try {
                 const [rateRes, assetRes, predRes, sentRes, accRes, lagRes] = await Promise.all([
-                    fetch(`${apiUrl}/exchange-rates/audinr`),
+                    fetch(`${apiUrl}/exchange-rates/audinr?days=${priceRange}`),
                     fetch(`${apiUrl}/asset/audinr?days=${priceRange}`),
                     fetch(`${apiUrl}/predictions/audinr`),
                     fetch(`${apiUrl}/sentiment/history/audinr`),
