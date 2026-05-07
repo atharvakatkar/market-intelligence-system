@@ -8,6 +8,7 @@ interface DashboardProps {
     onSelectAsset: (asset: string) => void;
     onSelectAudInr: () => void;
     audInrRate: number | null;
+    audInrVolatility: any;
     onRefresh: () => void;
     audRate: number | null;
     lastPipelineRun: any;
@@ -50,7 +51,7 @@ const LEVEL_TEXT: Record<string, string> = {
 
 const DOMAINS = ['Precious Metals', 'Energy', 'Equity Markets'];
 
-export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelectAudInr, onRefresh, audRate, audInrRate, lastPipelineRun }: DashboardProps) {
+export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelectAudInr, onRefresh, audRate, audInrRate, audInrVolatility, lastPipelineRun }: DashboardProps) {
     const [clockDisplay, setClockDisplay] = useState<string>('');
     const [clockDay, setClockDay] = useState<string>('');
     const [publicHoliday, setPublicHoliday] = useState<string | null>(null);

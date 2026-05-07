@@ -25,6 +25,7 @@ function App() {
     const [lastUpdated, setLastUpdated] = useState<string>('');
     const [audRate, setAudRate] = useState<number | null>(null);
     const [audInrRate, setAudInrRate] = useState<number | null>(null);
+    const [audInrVolatility, setAudInrVolatility] = useState<any>(null);
     const [lastPipelineRun, setLastPipelineRun] = useState<any>(null);
 
 
@@ -39,15 +40,22 @@ function App() {
             const rateData = await rateRes.json();
             const pipelineData = await pipelineRes.json();
             let audInrData = null;
-            try {
-                const audInrRes = await fetch(`${API_URL}/exchange-rates/audinr`);
-                audInrData = await audInrRes.json();
-            } catch (e) {
-                console.warn('AUD/INR rate fetch failed, will retry on next refresh');
-            }
-            setAssets(assetsData.assets);
-            if (rateData.usd_aud) setAudRate(rateData.usd_aud);
-            if (audInrData?.current_rate) setAudInrRate(audInrData.current_rate);
+                let audInrAssetData = null;
+                try {
+                    const [audInrRes, audInrAssetRes] = await Promise.all([
+                        fetch(`${API_URL}/exchange-rates/audinr`),
+                        fetch(`${API_URL}/asset/audinr`)
+                    ]);
+                    audInrData = await audInrRes.json();
+                    audInrAssetData = await audInrAssetRes.json();
+                } catch (e) {
+                    console.warn('AUD/INR fetch failed, will retry on next refresh');
+                }
+                setAssets(assetsData.assets);
+                if (rateData.usd_aud) setAudRate(rateData.usd_aud);
+                if (audInrData?.current_rate) setAudInrRate(audInrData.current_rate);
+                if (audInrAssetData?.volatility) setAudInrVolatility(audInrAssetData.volatility);
+
             setLastPipelineRun(pipelineData);
             setLastUpdated(new Date().toLocaleString('en-AU', {
                 day: '2-digit',
@@ -104,6 +112,7 @@ function App() {
                     onRefresh={fetchAssets}
                     audRate={audRate}
                     audInrRate={audInrRate}
+                    audInrVolatility={audInrVolatility}
                     lastPipelineRun={lastPipelineRun}
                 />
             )}
