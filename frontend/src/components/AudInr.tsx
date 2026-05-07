@@ -23,6 +23,22 @@ const SENTIMENT_COLORS: Record<string, string> = {
     neutral: 'text-gray-400 bg-gray-400/10'
 };
 
+const SOURCE_NAMES: Record<string, string> = {
+  et: "Economic Times",
+  business_standard: "Business Standard",
+  mint: "Mint",
+  hindustan_times: "Hindustan Times",
+  forexlive: "ForexLive",
+  fxstreet: "FXStreet",
+  bbc: "BBC Business",
+  cnbc: "CNBC",
+  ft: "Financial Times",
+  marketwatch: "MarketWatch",
+  rba: "Reserve Bank of Australia",
+  kitco: "Kitco",
+  oilprice: "OilPrice.com",
+};
+
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null;
     const validItems = payload.filter((p: any) => p.value !== null && p.value !== undefined);
@@ -71,7 +87,7 @@ export default function AudInr({ apiUrl, onBack }: AudInrProps) {
     const [lagData, setLagData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [priceRange, setPriceRange] = useState<number>(30);
-    const [activePage, setActivePage] = useState<number>(0);
+    const [activePage, setActivePage] = useState<number>(-1);
     const [aiAnalysis, setAiAnalysis] = useState<string>('');
     const [aiLoading, setAiLoading] = useState<boolean>(false);
 
@@ -185,7 +201,7 @@ Write the analysis now:`;
     );
 
     // Accuracy table pagination
-    const allRows = accuracy?.accuracy || [];
+    const allRows = accuracy?.predictions || [];
     const thisWeekMonday = getWeekMonday(new Date());
     const thisWeekRows = allRows.filter((r: any) => {
         const d = new Date(r.date + 'T00:00:00');
@@ -231,16 +247,16 @@ Write the analysis now:`;
 
                 {/* 4 Stat Boxes */}
                 <div className="grid grid-cols-4 gap-4 mb-6">
-                    <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                        <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Current Rate</p>
+                    <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+                        <p className="text-xs text-gray-500 mb-1">Current Rate</p>
                         <p className="text-2xl font-bold text-white">
                             ₹{rateData?.current_rate?.toFixed(2) || '—'}
                         </p>
                         <p className="text-gray-500 text-xs mt-1">1 AUD = {rateData?.current_rate?.toFixed(2)} INR</p>
                     </div>
 
-                    <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                        <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Volatility Score</p>
+                    <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+                        <p className="text-xs text-gray-500 mb-1">Volatility Score</p>
                         <p className="text-2xl font-bold" style={{ color: volColor }}>
                             {volatility ? `${(volatility.score * 100).toFixed(1)}%` : '—'}
                         </p>
@@ -251,8 +267,8 @@ Write the analysis now:`;
                         </p>
                     </div>
 
-                    <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                        <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Risk Level</p>
+                    <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+                        <p className="text-xs text-gray-500 mb-1">Risk Level</p>
                         <p className="text-2xl font-bold" style={{ color: volColor }}>
                             {volatility?.level || '—'}
                         </p>
@@ -261,8 +277,8 @@ Write the analysis now:`;
                         )}
                     </div>
 
-                    <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                        <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Sentiment Score</p>
+                    <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+                        <p className="text-xs text-gray-500 mb-1">Sentiment Score</p>
                         <p className="text-2xl font-bold text-white">
                             {volatility ? `${(volatility.sentiment_score * 100).toFixed(1)}%` : '—'}
                         </p>
@@ -275,16 +291,18 @@ Write the analysis now:`;
 
                 {/* Transfer Recommendation Banner */}
                 {transferRec && (
-                    <div className="bg-gray-900 rounded-lg p-4 border border-gray-800 mb-6">
-                        <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Transfer Recommendation</p>
+                    <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 mb-6">
+                        <p className="text-xs text-gray-500 mb-1">Transfer Recommendation</p>
                         <p className={`text-lg font-bold ${transferRec.color} mb-1`}>{transferRec.label}</p>
                         <p className="text-gray-300 text-sm">{transferRec.description}</p>
                     </div>
                 )}
 
                 {/* AI Analysis */}
-                <div className="bg-gray-900 rounded-lg p-4 border border-gray-800 mb-6">
-                    <p className="text-gray-400 text-xs uppercase tracking-wide mb-2">AI Analysis</p>
+                <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 mb-6">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-blue-400 uppercase tracking-wider font-semibold">AI Analysis</span>
+                    </div>
                     {aiLoading ? (
                         <div className="flex items-center gap-2 text-gray-400">
                             <RefreshCw className="w-4 h-4 animate-spin" />
@@ -299,8 +317,10 @@ Write the analysis now:`;
 
                 {/* Lag Analysis */}
                 {lagData && lagData.status === 'ok' && (
-                    <div className="bg-gray-900 rounded-lg p-4 border border-gray-800 mb-6">
-                        <p className="text-gray-400 text-xs uppercase tracking-wide mb-3">Sentiment Lag Analysis</p>
+                    <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 mb-6">
+                        <div className="flex items-center gap-2 mb-3">
+                            <span className="text-xs text-blue-400 uppercase tracking-wider font-semibold">Sentiment — Price Lag Analysis</span>
+                        </div>
                         <div className="grid grid-cols-3 gap-4 mb-3">
                             <div>
                                 <p className="text-gray-500 text-xs">Best Lag</p>
@@ -329,9 +349,9 @@ Write the analysis now:`;
                 )}
 
                 {/* Price Chart */}
-                <div className="bg-gray-900 rounded-lg p-4 border border-gray-800 mb-6">
+                <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 mb-6">
                     <div className="flex items-center justify-between mb-4">
-                        <p className="text-gray-400 text-xs uppercase tracking-wide">Rate History + 5 Day Forecast</p>
+                        <h2 className="text-lg font-semibold text-white">Rate History + 5 Day Forecast</h2>
                         <div className="flex gap-1">
                             {[{ label: '1M', value: 30 }, { label: '3M', value: 90 }, { label: '6M', value: 180 }, { label: '1Y', value: 365 }].map(opt => (
                                 <button
@@ -359,8 +379,8 @@ Write the analysis now:`;
                                 tickFormatter={(val) => `₹${val.toFixed(1)}`}
                             />
                             <Tooltip content={<CustomTooltip />} />
-                            <Line type="monotone" dataKey="audPrice" stroke="#3b82f6" strokeWidth={2} dot={false} connectNulls={true} />
-                            <Line type="monotone" dataKey="predictedPrice" stroke="#a855f7" strokeWidth={2} strokeDasharray="5 5" dot={false} connectNulls={false} />
+                            <Line type="monotone" dataKey="audPrice" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3, fill: '#3b82f6' }} activeDot={{ r: 5 }} connectNulls={true} />
+                            <Line type="monotone" dataKey="predictedPrice" stroke="#a855f7" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3, fill: '#a855f7' }} activeDot={{ r: 5 }} connectNulls={false} />
                         </LineChart>
                     </ResponsiveContainer>
                     <div className="flex gap-4 mt-2">
@@ -371,8 +391,8 @@ Write the analysis now:`;
 
                 {/* Sentiment Trend */}
                 {sentimentHistory.length > 0 && (
-                    <div className="bg-gray-900 rounded-lg p-4 border border-gray-800 mb-6">
-                        <p className="text-gray-400 text-xs uppercase tracking-wide mb-4">Sentiment Trend</p>
+                    <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 mb-6">
+                        <h2 className="text-lg font-semibold text-white mb-4">Sentiment Trend</h2>
                         <ResponsiveContainer width="100%" height={200}>
                             <AreaChart data={sentimentHistory}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
@@ -393,8 +413,10 @@ Write the analysis now:`;
                 )}
 
                 {/* Prediction Accuracy Table */}
-                <div className="bg-gray-900 rounded-lg p-4 border border-gray-800 mb-6">
-                    <p className="text-gray-400 text-xs uppercase tracking-wide mb-3">Prediction Accuracy</p>
+                <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-semibold text-white">Prediction Accuracy</h2>
+                    </div>
                     <div className="flex gap-2 mb-3 flex-wrap">
                         <button
                             onClick={() => setActivePage(-1)}
@@ -457,8 +479,8 @@ Write the analysis now:`;
                 </div>
 
                 {/* Headlines */}
-                <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                    <p className="text-gray-400 text-xs uppercase tracking-wide mb-3">Latest Headlines</p>
+                <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
+                    <h2 className="text-lg font-semibold text-white mb-4">Latest Headlines</h2>
                     <div className="space-y-3">
                         {headlines.slice(0, 15).map((h: any, i: number) => (
                             <div key={i} className="border-b border-gray-800/50 pb-3 last:border-0 last:pb-0">
@@ -469,13 +491,13 @@ Write the analysis now:`;
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-3 mt-1">
-                                    <span className="text-gray-500 text-xs uppercase">{h.source}</span>
+                                    <span className="text-gray-500 text-xs">{SOURCE_NAMES[h.source] || h.source}</span>
                                     {h.published_at && (
                                         <span className="text-gray-600 text-xs">
                                             {new Date(h.published_at).toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                         </span>
                                     )}
-                                    <span className="text-gray-600 text-xs">relevance: {h.combined_relevance?.toFixed(2) || '—'}</span>
+                                    <span className="text-gray-600 text-xs">relevance: {h.relevance ? `${(h.relevance * 100).toFixed(0)}%` : '—'}</span>
                                 </div>
                             </div>
                         ))}

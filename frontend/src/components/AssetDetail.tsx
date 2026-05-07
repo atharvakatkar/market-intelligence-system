@@ -29,6 +29,22 @@ const COLOR_MAP: Record<string, string> = {
     red: '#ef4444'
 };
 
+const SOURCE_NAMES: Record<string, string> = {
+  et: "Economic Times",
+  business_standard: "Business Standard",
+  mint: "Mint",
+  hindustan_times: "Hindustan Times",
+  forexlive: "ForexLive",
+  fxstreet: "FXStreet",
+  bbc: "BBC Business",
+  cnbc: "CNBC",
+  ft: "Financial Times",
+  marketwatch: "MarketWatch",
+  rba: "Reserve Bank of Australia",
+  kitco: "Kitco",
+  oilprice: "OilPrice.com",
+};
+
 const CustomTooltip = ({ active, payload, label, assetName }: any) => {
     if (!active || !payload || !payload.length) return null;
 
@@ -202,12 +218,10 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
     return (
         <div className="max-w-6xl mx-auto px-4 py-6">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-8">
-                <button
-                    onClick={onBack}
-                    className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
-                >
-                    <ArrowLeft className="w-5 h-5 text-gray-400" />
+            <div className="flex flex-col gap-2 mb-8">
+                <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors w-fit">
+                    <ArrowLeft className="w-5 h-5" />
+                    <span>Back to Dashboard</span>
                 </button>
                 <div>
                     <h1 className="text-3xl font-bold text-white">{ASSET_LABELS[assetName]}</h1>
@@ -648,7 +662,7 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                                 <div>
                                     <p className="text-gray-300 text-sm">{h.headline}</p>
                                     <p className="text-gray-600 text-xs mt-1">
-                                        {h.source} · relevance {(h.relevance * 100).toFixed(0)}%
+                                        {SOURCE_NAMES[h.source] || h.source} · relevance {(h.relevance * 100).toFixed(0)}%
                                         {h.published_at && ` · ${new Date(h.published_at).toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`}
                                     </p>
                                 </div>
