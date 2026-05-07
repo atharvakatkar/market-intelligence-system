@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
 import { Asset } from '../App';
+import Aurora from './Aurora';
 
 interface DashboardProps {
     assets: Asset[];
@@ -121,7 +122,16 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
         : 0;
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="relative min-h-screen">
+            <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+                <Aurora
+                    colorStops={["#EF4444", "#B497CF", "#5227FF"]}
+                    blend={1}
+                    amplitude={1.0}
+                    speed={1.3}
+                />
+            </div>
+            <div className="relative max-w-7xl mx-auto px-4 py-6" style={{ zIndex: 1 }}>
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 {/* Left — title */}
@@ -306,5 +316,6 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
                 </div>
             </div>
         </div>
+    </div>
     );
 }
