@@ -261,7 +261,7 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div
                         onClick={onSelectAudInr}
-                        className="bg-gray-900 rounded-xl p-5 border-l-4 border-blue-500 cursor-pointer hover:bg-gray-800 transition-all"
+                        className={`bg-gray-900 rounded-xl p-5 border-l-4 ${audInrVolatility ? COLOR_CLASSES[audInrVolatility.color]?.split(' ')[0] : 'border-blue-500'} cursor-pointer hover:bg-gray-800 transition-all`}
                     >
                         <div className="flex items-start justify-between mb-4">
                             <div>
@@ -273,9 +273,39 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
                                     ₹{audInrRate ? audInrRate.toFixed(2) : '—'}
                                 </p>
                                 <p className="text-sm text-gray-400">per 1 AUD</p>
+                                <div className="flex items-center gap-1 justify-end mt-1">
+                                    {audInrVolatility && getMomentumIcon(audInrVolatility.momentum_score)}
+                                    <span className="text-xs text-gray-400">momentum</span>
+                                </div>
                             </div>
                         </div>
-                        <p className="text-xs text-gray-400 mt-2">Click to view transfer intelligence, rate forecast and sentiment analysis</p>
+
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs text-gray-500 mb-1">Volatility Risk</p>
+                                <div className="w-32 bg-gray-800 rounded-full h-1.5">
+                                    <div
+                                        className={`h-1.5 rounded-full ${audInrVolatility ? COLOR_CLASSES[audInrVolatility.color]?.split(' ')[1] : 'bg-blue-500'}`}
+                                        style={{ width: `${audInrVolatility ? audInrVolatility.volatility_score * 100 : 0}%` }}
+                                    />
+                                </div>
+                            </div>
+                            <span className={`text-sm font-bold ${audInrVolatility ? LEVEL_TEXT[audInrVolatility.color] : 'text-gray-400'}`}>
+                                {audInrVolatility?.volatility_level || '—'}
+                            </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1.5 italic">
+                            {audInrVolatility ? getVolatilityInterpretation(audInrVolatility.sentiment_score, audInrVolatility.momentum_score, audInrVolatility.trend_score) : '—'}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-2">
+                            {audInrVolatility?.calculated_at ? `Updated: ${new Date(audInrVolatility.calculated_at).toLocaleString('en-AU', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}` : ''}
+                        </p>
                     </div>
                 </div>
             </div>
