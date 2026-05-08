@@ -1,21 +1,6 @@
 import { useRef, useCallback, useEffect, type ReactNode } from 'react';
 import './BorderGlow.css';
 
-interface BorderGlowProps {
-  children?: ReactNode;
-  className?: string;
-  edgeSensitivity?: number;
-  glowColor?: string;
-  backgroundColor?: string;
-  borderRadius?: number;
-  glowRadius?: number;
-  glowIntensity?: number;
-  coneSpread?: number;
-  animated?: boolean;
-  colors?: string[];
-  fillOpacity?: number;
-}
-
 function parseHSL(hslStr: string): { h: number; s: number; l: number } {
   const match = hslStr.match(/([\d.]+)\s*([\d.]+)%?\s*([\d.]+)%?/);
   if (!match) return { h: 40, s: 80, l: 80 };
