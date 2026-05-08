@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, type ReactNode } from 'react';
+import { useRef, useCallback, useEffect} from 'react';
 import './BorderGlow.css';
 
 function parseHSL(hslStr: string): { h: number; s: number; l: number } {
