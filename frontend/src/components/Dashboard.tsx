@@ -190,23 +190,23 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
                 </div>
             </div>
 
-            {/* Domains */}
-            {DOMAINS.map(domain => {
-                const domainAssets = getAssetsByDomain(domain);
-                if (domainAssets.length === 0) return null;
-                return (
-                    <div key={domain} className="mb-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {domainAssets.map(asset => (
-                                <BorderGlow
-                                    key={asset.asset}
-                                    backgroundColor="#111827"
-                                    borderRadius={12}
-                                    glowColor="40 80 80"
-                                    colors={['#c084fc', '#f472b6', '#38bdf8']}
-                                    glowIntensity={1}
-                                    coneSpread={25}
-                                >
+            {/* Asset Cards — 3+2 Grid */}
+            <div className="mb-8">
+                {/* Row 1 — Gold, Silver, Oil */}
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                    {['gold', 'silver', 'oil'].map(assetKey => {
+                        const asset = assets.find(a => a.asset === assetKey);
+                        if (!asset) return null;
+                        return (
+                            <BorderGlow
+                                key={asset.asset}
+                                backgroundColor="#111827"
+                                borderRadius={12}
+                                glowColor="40 80 80"
+                                colors={['#c084fc', '#f472b6', '#38bdf8']}
+                                glowIntensity={1}
+                                coneSpread={25}
+                            >
                                 <div
                                     onClick={() => onSelectAsset(asset.asset)}
                                     className={`bg-gray-900 rounded-xl p-5 border-l-4 ${COLOR_CLASSES[asset.color]?.split(' ')[0]} cursor-pointer hover:bg-gray-800 transition-all`}
@@ -217,27 +217,20 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
                                             <p className="text-xs text-gray-500">{ASSET_SYMBOLS[asset.asset]}</p>
                                         </div>
                                         <div className="text-right">
-                                            {asset.asset === 'asx200' ? (
-                                                <p className="text-xl font-bold text-white">
-                                                    {asset.latest_price?.toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts
+                                            <div className="text-right">
+                                                <p className="text-base font-bold text-white">
+                                                    AU${audRate ? (asset.latest_price * audRate).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
                                                 </p>
-                                            ) : (
-                                                <div className="text-right">
-                                                    <p className="text-base font-bold text-white">
-                                                        AU${audRate ? (asset.latest_price * audRate).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
-                                                    </p>
-                                                    <p className="text-sm text-gray-400">
-                                                        US${asset.latest_price?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                    </p>
-                                                </div>
-                                            )}
+                                                <p className="text-sm text-gray-400">
+                                                    US${asset.latest_price?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </p>
+                                            </div>
                                             <div className="flex items-center gap-1 justify-end mt-1">
                                                 {getMomentumIcon(asset.momentum_score)}
                                                 <span className="text-xs text-gray-400">momentum</span>
                                             </div>
                                         </div>
                                     </div>
-
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-xs text-gray-500 mb-1">Volatility Risk</p>
@@ -257,81 +250,133 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
                                     </p>
                                     <p className="text-xs text-gray-600 mt-2">
                                         Updated: {new Date(asset.analysed_at).toLocaleString('en-AU', {
-                                            day: '2-digit',
-                                            month: '2-digit',
-                                            year: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit'
+                                            day: '2-digit', month: '2-digit', year: 'numeric',
+                                            hour: '2-digit', minute: '2-digit'
                                         })}
                                     </p>
                                 </div>
                             </BorderGlow>
-                            ))}
-                        </div>
-                    </div>
-                );
-            })}
+                        );
+                    })}
+                </div>
 
-            {/* AUD/INR Currency Intelligence */}
-            <div className="mb-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <BorderGlow
-                        backgroundColor="#111827"
-                        borderRadius={12}
-                        glowColor="40 80 80"
-                        colors={['#c084fc', '#f472b6', '#38bdf8']}
-                        glowIntensity={1}
-                        coneSpread={25}
-                    >
-                    <div
-                        onClick={onSelectAudInr}
-                        className={`bg-gray-900 rounded-xl p-5 border-l-4 ${audInrVolatility ? COLOR_CLASSES[audInrVolatility.color]?.split(' ')[0] : 'border-blue-500'} cursor-pointer hover:bg-gray-800 transition-all`}
-                    >
-                        <div className="flex items-start justify-between mb-4">
-                            <div>
-                                <h3 className="text-lg font-bold text-white">AUD / INR</h3>
-                                <p className="text-xs text-gray-500">Australian Dollar to Indian Rupee</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-base font-bold text-white">
-                                    ₹{audInrRate ? audInrRate.toFixed(2) : '—'}
-                                </p>
-                                <p className="text-sm text-gray-400">per 1 AUD</p>
-                                <div className="flex items-center gap-1 justify-end mt-1">
-                                    {audInrVolatility && getMomentumIcon(audInrVolatility.momentum_score)}
-                                    <span className="text-xs text-gray-400">momentum</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs text-gray-500 mb-1">Volatility Risk</p>
-                                <div className="w-32 bg-gray-800 rounded-full h-1.5">
+                {/* Row 2 — ASX200, AUD/INR centered */}
+                <div className="grid grid-cols-3 gap-4">
+                    <div className="col-start-1">
+                        {assets.find(a => a.asset === 'asx200') && (() => {
+                            const asset = assets.find(a => a.asset === 'asx200')!;
+                            return (
+                                <BorderGlow
+                                    backgroundColor="#111827"
+                                    borderRadius={12}
+                                    glowColor="40 80 80"
+                                    colors={['#c084fc', '#f472b6', '#38bdf8']}
+                                    glowIntensity={1}
+                                    coneSpread={25}
+                                >
                                     <div
-                                        className={`h-1.5 rounded-full ${audInrVolatility ? COLOR_CLASSES[audInrVolatility.color]?.split(' ')[1] : 'bg-blue-500'}`}
-                                        style={{ width: `${audInrVolatility ? audInrVolatility.volatility_score * 100 : 0}%` }}
-                                    />
-                                </div>
-                            </div>
-                            <span className={`text-sm font-bold ${audInrVolatility ? LEVEL_TEXT[audInrVolatility.color] : 'text-gray-400'}`}>
-                                {audInrVolatility?.volatility_level || '—'}
-                            </span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1.5 italic">
-                            {audInrVolatility ? getVolatilityInterpretation(audInrVolatility.sentiment_score, audInrVolatility.momentum_score, audInrVolatility.trend_score) : '—'}
-                        </p>
-                        <p className="text-xs text-gray-600 mt-2">
-                            {audInrVolatility?.calculated_at ? `Updated: ${new Date(audInrVolatility.calculated_at).toLocaleString('en-AU', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}` : ''}
-                        </p>
+                                        onClick={() => onSelectAsset(asset.asset)}
+                                        className={`bg-gray-900 rounded-xl p-5 border-l-4 ${COLOR_CLASSES[asset.color]?.split(' ')[0]} cursor-pointer hover:bg-gray-800 transition-all`}
+                                    >
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div>
+                                                <h3 className="text-lg font-bold text-white">{ASSET_LABELS[asset.asset]}</h3>
+                                                <p className="text-xs text-gray-500">{ASSET_SYMBOLS[asset.asset]}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xl font-bold text-white">
+                                                    {asset.latest_price?.toLocaleString('en-AU', { maximumFractionDigits: 1 })} pts
+                                                </p>
+                                                <div className="flex items-center gap-1 justify-end mt-1">
+                                                    {getMomentumIcon(asset.momentum_score)}
+                                                    <span className="text-xs text-gray-400">momentum</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-xs text-gray-500 mb-1">Volatility Risk</p>
+                                                <div className="w-32 bg-gray-800 rounded-full h-1.5">
+                                                    <div
+                                                        className={`h-1.5 rounded-full ${COLOR_CLASSES[asset.color]?.split(' ')[1]}`}
+                                                        style={{ width: `${asset.volatility_score * 100}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <span className={`text-sm font-bold ${LEVEL_TEXT[asset.color]}`}>
+                                                {asset.volatility_level}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1.5 italic">
+                                            {getVolatilityInterpretation(asset.sentiment_score, asset.momentum_score, asset.trend_score)}
+                                        </p>
+                                        <p className="text-xs text-gray-600 mt-2">
+                                            Updated: {new Date(asset.analysed_at).toLocaleString('en-AU', {
+                                                day: '2-digit', month: '2-digit', year: 'numeric',
+                                                hour: '2-digit', minute: '2-digit'
+                                            })}
+                                        </p>
+                                    </div>
+                                </BorderGlow>
+                            );
+                        })()}
                     </div>
-                    </BorderGlow>
+
+                    <div className="col-start-2">
+                        <BorderGlow
+                            backgroundColor="#111827"
+                            borderRadius={12}
+                            glowColor="40 80 80"
+                            colors={['#c084fc', '#f472b6', '#38bdf8']}
+                            glowIntensity={1}
+                            coneSpread={25}
+                        >
+                            <div
+                                onClick={onSelectAudInr}
+                                className={`bg-gray-900 rounded-xl p-5 border-l-4 ${audInrVolatility ? COLOR_CLASSES[audInrVolatility.color]?.split(' ')[0] : 'border-blue-500'} cursor-pointer hover:bg-gray-800 transition-all`}
+                            >
+                                <div className="flex items-start justify-between mb-4">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white">AUD / INR</h3>
+                                        <p className="text-xs text-gray-500">Australian Dollar to Indian Rupee</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-base font-bold text-white">
+                                            ₹{audInrRate ? audInrRate.toFixed(2) : '—'}
+                                        </p>
+                                        <p className="text-sm text-gray-400">per 1 AUD</p>
+                                        <div className="flex items-center gap-1 justify-end mt-1">
+                                            {audInrVolatility && getMomentumIcon(audInrVolatility.momentum_score)}
+                                            <span className="text-xs text-gray-400">momentum</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-xs text-gray-500 mb-1">Volatility Risk</p>
+                                        <div className="w-32 bg-gray-800 rounded-full h-1.5">
+                                            <div
+                                                className={`h-1.5 rounded-full ${audInrVolatility ? COLOR_CLASSES[audInrVolatility.color]?.split(' ')[1] : 'bg-blue-500'}`}
+                                                style={{ width: `${audInrVolatility ? audInrVolatility.volatility_score * 100 : 0}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <span className={`text-sm font-bold ${audInrVolatility ? LEVEL_TEXT[audInrVolatility.color] : 'text-gray-400'}`}>
+                                        {audInrVolatility?.volatility_level || '—'}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1.5 italic">
+                                    {audInrVolatility ? getVolatilityInterpretation(audInrVolatility.sentiment_score, audInrVolatility.momentum_score, audInrVolatility.trend_score) : '—'}
+                                </p>
+                                <p className="text-xs text-gray-600 mt-2">
+                                    {audInrVolatility?.calculated_at ? `Updated: ${new Date(audInrVolatility.calculated_at).toLocaleString('en-AU', {
+                                        day: '2-digit', month: '2-digit', year: 'numeric',
+                                        hour: '2-digit', minute: '2-digit'
+                                    })}` : ''}
+                                </p>
+                            </div>
+                        </BorderGlow>
+                    </div>
                 </div>
             </div>
         </div>
