@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Dashboard from './components/Dashboard';
 import AssetDetail from './components/AssetDetail';
 import AudInr from './components/AudInr';
+import ClickSpark from './components/ClickSpark';
 
 const API_URL = 'https://market-intelligence-system-tau.vercel.app';
 
@@ -90,6 +91,7 @@ function App() {
     }
 
     return (
+        <ClickSpark sparkColor="#a78bfa" sparkSize={10} sparkRadius={20} sparkCount={8} duration={400}>
         <div className="min-h-screen bg-gray-950 text-white">
             {showAudInr ? (
                 <AudInr
@@ -117,6 +119,7 @@ function App() {
                 />
             )}
         </div>
+    </ClickSpark>
     );
 }
 

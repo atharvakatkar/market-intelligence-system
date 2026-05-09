@@ -122,7 +122,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }} onClick={handleClick}>
-      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 9999 }} />
+      <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9999, width: '100vw', height: '100vh' }} />
       {children}
     </div>
   );
