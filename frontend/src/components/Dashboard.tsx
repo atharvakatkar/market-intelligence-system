@@ -318,10 +318,11 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
                             colors={['#c084fc', '#f472b6', '#38bdf8']}
                             glowIntensity={1}
                             coneSpread={25}
+                            className="h-full"
                         >
                             <div
                                 onClick={onSelectAudInr}
-                                className={`bg-gray-900 rounded-xl p-5 border-l-4 ${audInrVolatility ? COLOR_CLASSES[audInrVolatility.color]?.split(' ')[0] : 'border-blue-500'} cursor-pointer hover:bg-gray-800 transition-all`}
+                                className={`bg-gray-900 rounded-xl p-5 border-l-4 h-full ${audInrVolatility ? COLOR_CLASSES[audInrVolatility.color]?.split(' ')[0] : 'border-blue-500'} cursor-pointer hover:bg-gray-800 transition-all`}
                             >
                                 <div className="flex items-start justify-between mb-4">
                                     <div>
