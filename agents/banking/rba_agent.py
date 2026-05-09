@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from agents.news.sentiment_agent import analyse_sentiment
 from agents.news.relevance_combined import combined_relevance, filter_relevant_headlines
+from dateutil import parser as dateparser
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -31,7 +32,6 @@ def scrape_rba():
                         parsed_date = None
                         if pub_date:
                             try:
-                                from dateutil import parser as dateparser
                                 parsed_date = dateparser.parse(pub_date.get_text(strip=True)).isoformat()
                             except Exception:
                                 parsed_date = None

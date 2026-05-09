@@ -44,6 +44,7 @@ def scrape_oilprice():
                             "headline": text,
                             "assets": ["oil"],
                             "scraped_at": datetime.utcnow().isoformat(),
+                            "published_at": None,
                         }
                     )
     except Exception as e:

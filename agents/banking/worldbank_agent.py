@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from agents.news.sentiment_agent import analyse_sentiment
 from agents.news.relevance_combined import filter_relevant_headlines
+from email.utils import parsedate_to_datetime
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
@@ -13,7 +14,7 @@ HEADERS = {
 }
 
 
-def scrape_imf():
+def scrape_macro_news():
     headlines = []
     urls = [
         "https://www.ft.com/rss/home",
@@ -37,7 +38,6 @@ def scrape_imf():
                         parsed_date = None
                         if pub_date:
                             try:
-                                from email.utils import parsedate_to_datetime
                                 parsed_date = parsedate_to_datetime(pub_date.get_text(strip=True)).isoformat()
                             except Exception:
                                 parsed_date = None
@@ -56,8 +56,8 @@ def scrape_imf():
 
 
 def run_worldbank_agent():
-    print("\n[IMF AGENT] Scraping IMF communications...")
-    headlines = scrape_imf()
+    print("\n[MACRO AGENT] Scraping FT and Marketwatch...")
+    headlines = scrape_macro_news()
     print(f"Scraped {len(headlines)} IMF headlines")
 
     if not headlines:

@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+from email.utils import parsedate_to_datetime
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -78,7 +79,6 @@ def scrape_cnbc():
                         parsed_date = None
                         if pub_date:
                             try:
-                                from email.utils import parsedate_to_datetime
                                 parsed_date = parsedate_to_datetime(pub_date.get_text(strip=True)).isoformat()
                             except Exception:
                                 parsed_date = None
@@ -112,7 +112,6 @@ def scrape_bbc():
                     parsed_date = None
                     if pub_date:
                         try:
-                            from email.utils import parsedate_to_datetime
                             parsed_date = parsedate_to_datetime(pub_date.get_text(strip=True)).isoformat()
                         except Exception:
                             parsed_date = None

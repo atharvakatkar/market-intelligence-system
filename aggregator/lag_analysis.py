@@ -141,7 +141,7 @@ def interpret_correlation(corr: float, lag: str) -> str:
 
 def run_lag_analysis() -> dict:
     print("\n[LAG ANALYSIS] Calculating sentiment-to-price lag correlations...")
-    assets = ["gold", "silver", "oil", "asx200"]
+    assets = ["gold", "silver", "oil", "asx200", "audinr"]
     results = {}
     for asset in assets:
         result = calculate_lag_correlation(asset)

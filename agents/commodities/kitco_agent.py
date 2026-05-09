@@ -4,6 +4,13 @@ from datetime import datetime
 from agents.news.sentiment_agent import analyse_sentiment
 from agents.news.relevance_combined import filter_relevant_headlines
 
+KITCO_BLOCKLIST = [
+                    "buy/sell",
+                    "bullion coins",
+                    "all metal quotes",
+                    "precious metalsall",
+                ]
+
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -24,19 +31,14 @@ def scrape_kitco():
             text = link.get_text(strip=True)
             if len(text) > 25:
                 text = text.encode("ascii", "ignore").decode("ascii")
-                BLOCKLIST = [
-                    "buy/sell",
-                    "bullion coins",
-                    "all metal quotes",
-                    "precious metalsall",
-                ]
-                if len(text) > 25 and not any(b in text.lower() for b in BLOCKLIST):
+                if not any(b in text.lower() for b in KITCO_BLOCKLIST):
                     headlines.append(
                         {
                             "source": "kitco",
                             "headline": text,
                             "assets": ["gold", "silver"],
                             "scraped_at": datetime.utcnow().isoformat(),
+                            "published_at": None,
                         }
                     )
     except Exception as e:

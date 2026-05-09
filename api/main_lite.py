@@ -38,7 +38,7 @@ def root():
     return {
         "name": "Market Intelligence System",
         "version": "1.0.0",
-        "assets": ["gold", "silver", "oil", "asx200"],
+        "assets": ["gold", "silver", "oil", "asx200", "audinr"],
         "status": "live",
     }
 
@@ -309,7 +309,7 @@ def get_predictions(asset_name: str):
                 }
                 for r in results
             ],
-            "disclaimer": "Predictions based on 6 months price momentum and volatility patterns. Model improves as sentiment data accumulates over time.",
+            "disclaimer": "Predictions based on price momentum, volatility patterns, and validated sentiment lag signals. Model improves as sentiment data accumulates.",
         }
     finally:
         db.close()

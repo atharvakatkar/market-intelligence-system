@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from agents.news.sentiment_agent import analyse_sentiment
 from agents.news.relevance_combined import filter_relevant_headlines
+from email.utils import parsedate_to_datetime
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
@@ -40,7 +41,6 @@ def scrape_india():
                         parsed_date = None
                         if pub_date:
                             try:
-                                from email.utils import parsedate_to_datetime
                                 parsed_date = parsedate_to_datetime(pub_date.get_text(strip=True)).isoformat()
                             except Exception:
                                 parsed_date = None
