@@ -9,7 +9,12 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "api/main_lite.py"
+      "dest": "api/main_lite.py",
+      "headers": {
+        "Access-Control-Allow-Origin": "https://market-intelligence-system-app.vercel.app",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization"
+      }
     }
   ]
 }
