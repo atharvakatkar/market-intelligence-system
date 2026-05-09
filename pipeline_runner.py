@@ -31,12 +31,12 @@ def run_full_pipeline():
     print(f"{'='*60}")
 
     # Step 1 — Fetch and save historical prices
-    print("\n[1/4] Fetching asset prices...")
+    print("\n[1/6] Fetching asset prices...")
     prices = fetch_historical_prices()
     save_asset_prices(prices)
 
     # Step 2 — Run all specialist agents
-    print("\n[2/4] Running specialist agents...")
+    print("\n[2/6] Running specialist agents...")
     all_results = []
     all_results.extend(run_rba_agent())
     all_results.extend(run_worldbank_agent())
@@ -45,7 +45,7 @@ def run_full_pipeline():
     all_results.extend(run_india_agent())
 
     # Step 3 — Scrape and process general news
-    print("\n[3/4] Scraping general news...")
+    print("\n[3/6] Scraping general news...")
     headlines = scrape_all()
     scored_headlines = filter_relevant_headlines(headlines)
     texts = [h["headline"] for h in scored_headlines]
@@ -57,7 +57,7 @@ def run_full_pipeline():
     print(f"Total signals across all agents: {len(all_results)}")
 
     # Step 4 — Build asset sentiment summary from all_results
-    print("\n[4/4] Building sentiment summary...")
+    print("\n[4/6] Building sentiment summary...")
     asset_sentiments = {}
     for headline in all_results:
         for asset in headline.get("relevant_assets", []):
@@ -77,7 +77,7 @@ def run_full_pipeline():
     save_sentiment_summary(asset_sentiments)
 
     # Step 5 — Run aggregator and save volatility scores
-    print("\n[5/5] Running aggregator and predictions...")
+    print("\n[5/6] Running aggregator and predictions...")
     volatility_scores = run_aggregator()
     save_volatility_scores(volatility_scores)
 
@@ -88,6 +88,7 @@ def run_full_pipeline():
             save_predictions(asset, pred_result["predictions"], pred_result["model_r2"])
 
     # Step 7 — Update actual prices for past predictions
+    print("\n[6/6] Updating actual prices...")
     update_actual_prices()
 
     # Print summary

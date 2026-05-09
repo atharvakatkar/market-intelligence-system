@@ -46,6 +46,7 @@ def save_headlines_and_sentiment(results: list):
                     """
                 INSERT INTO headlines (source, headline, scraped_at, published_at)
                 VALUES (:source, :headline, :scraped_at, :published_at)
+                ON CONFLICT (source, headline, DATE(scraped_at::date)) DO NOTHING
                 RETURNING id
             """
                 ),
