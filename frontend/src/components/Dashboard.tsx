@@ -187,13 +187,13 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
                         if (!asset) return null;
                         return (
                             <BorderGlow
-                                key={asset.asset}
                                 backgroundColor="#111827"
                                 borderRadius={12}
                                 glowColor="40 80 80"
                                 colors={['#c084fc', '#f472b6', '#38bdf8']}
                                 glowIntensity={1}
                                 coneSpread={25}
+                                className="h-full"
                             >
                                 <div
                                     onClick={() => onSelectAsset(asset.asset)}
@@ -261,6 +261,7 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
                                     colors={['#c084fc', '#f472b6', '#38bdf8']}
                                     glowIntensity={1}
                                     coneSpread={25}
+                                    className="h-full"
                                 >
                                     <div
                                         onClick={() => onSelectAsset(asset.asset)}
