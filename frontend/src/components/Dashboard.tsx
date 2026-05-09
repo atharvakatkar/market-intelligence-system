@@ -275,6 +275,14 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
             {/* AUD/INR Currency Intelligence */}
             <div className="mb-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <BorderGlow
+                        backgroundColor="#111827"
+                        borderRadius={12}
+                        glowColor="40 80 80"
+                        colors={['#c084fc', '#f472b6', '#38bdf8']}
+                        glowIntensity={1}
+                        coneSpread={25}
+                    >
                     <div
                         onClick={onSelectAudInr}
                         className={`bg-gray-900 rounded-xl p-5 border-l-4 ${audInrVolatility ? COLOR_CLASSES[audInrVolatility.color]?.split(' ')[0] : 'border-blue-500'} cursor-pointer hover:bg-gray-800 transition-all`}
@@ -323,6 +331,7 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
                             })}` : ''}
                         </p>
                     </div>
+                    </BorderGlow>
                 </div>
             </div>
         </div>
