@@ -12,3 +12,6 @@ models/*.pkl
 node_modules/
 .pytest_cache/
 *.log
+.vercel
+.env*.local
+next-app/
