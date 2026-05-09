@@ -57,7 +57,10 @@ def save_headlines_and_sentiment(results: list):
                     "published_at": r.get("published_at", None),
                 },
             )
-            headline_id = result.fetchone()[0]
+            row = result.fetchone()
+            if row is None:
+                continue
+            headline_id = row[0]
 
             for asset in r.get("relevant_assets", []):
                 relevance = r.get("relevance", {}).get(asset, {})
