@@ -51,8 +51,6 @@ const LEVEL_TEXT: Record<string, string> = {
     red: 'text-red-400'
 };
 
-const DOMAINS = ['Precious Metals', 'Energy', 'Equity Markets'];
-
 export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelectAudInr, onRefresh, audRate, audInrRate, audInrVolatility, lastPipelineRun }: DashboardProps) {
     const [clockDisplay, setClockDisplay] = useState<string>('');
     const [clockDay, setClockDay] = useState<string>('');
@@ -89,9 +87,6 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
             })
             .catch(() => setPublicHoliday(null));
     }, []);
-    
-    const getAssetsByDomain = (domain: string) =>
-        assets.filter(a => ASSET_DOMAINS[a.asset] === domain);
 
     const getMomentumIcon = (score: number) => {
         if (score > 0.55) return <TrendingDown className="w-4 h-4 text-red-400" />;
