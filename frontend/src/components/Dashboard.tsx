@@ -30,13 +30,6 @@ const ASSET_SYMBOLS: Record<string, string> = {
     asx200: 'ASX:XJO'
 };
 
-const ASSET_DOMAINS: Record<string, string> = {
-    gold: 'Precious Metals',
-    silver: 'Precious Metals',
-    oil: 'Energy',
-    asx200: 'Equity Markets'
-};
-
 const COLOR_CLASSES: Record<string, string> = {
     green: 'border-green-500 bg-green-500',
     yellow: 'border-yellow-500 bg-yellow-500',
