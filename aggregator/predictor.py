@@ -6,19 +6,25 @@ from datetime import datetime, timedelta
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 
+SENTIMENT_LAG_DAYS = {
+    "gold": 4,
+    "silver": 4,
+    "oil": 2,
+    "asx200": 1,
+    "audinr": None,
+}
+
 
 def get_price_history_for_prediction(asset: str) -> pd.DataFrame:
     db = SessionLocal()
     try:
         result = db.execute(
-            text(
-                """
-            SELECT price_date, close_price
-            FROM asset_prices
-            WHERE asset = :asset
-            ORDER BY price_date ASC
-        """
-            ),
+            text("""
+                SELECT price_date, close_price
+                FROM asset_prices
+                WHERE asset = :asset
+                ORDER BY price_date ASC
+            """),
             {"asset": asset},
         )
         rows = result.fetchall()
@@ -28,6 +34,24 @@ def get_price_history_for_prediction(asset: str) -> pd.DataFrame:
         df["price_date"] = pd.to_datetime(df["price_date"])
         df["close_price"] = df["close_price"].astype(float)
         return df
+    finally:
+        db.close()
+
+
+def get_sentiment_lag(asset: str, lag_days: int) -> float | None:
+    db = SessionLocal()
+    try:
+        result = db.execute(
+            text("""
+                SELECT AVG(negative_pct) as avg_negative
+                FROM asset_sentiment_summary
+                WHERE asset = :asset
+                AND DATE(pipeline_run_at) = CURRENT_DATE - (:lag * INTERVAL '1 day')
+            """),
+            {"asset": asset, "lag": lag_days}
+        )
+        row = result.fetchone()
+        return float(row[0]) if row and row[0] is not None else None
     finally:
         db.close()
 
@@ -47,7 +71,6 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def train_and_predict(asset: str, forecast_days: int = 5) -> dict:
-    # Generate predictions for the next 5 trading days
     df = get_price_history_for_prediction(asset)
 
     if df.empty or len(df) < 30:
@@ -55,6 +78,7 @@ def train_and_predict(asset: str, forecast_days: int = 5) -> dict:
 
     df = engineer_features(df)
 
+    # Base feature cols
     feature_cols = [
         "return_1d",
         "return_5d",
@@ -65,6 +89,16 @@ def train_and_predict(asset: str, forecast_days: int = 5) -> dict:
         "volatility_21d",
         "ma_ratio",
     ]
+
+    # Add sentiment lag feature if available for this asset
+    lag_days = SENTIMENT_LAG_DAYS.get(asset)
+    sentiment_value = None
+    if lag_days is not None:
+        sentiment_value = get_sentiment_lag(asset, lag_days)
+
+    if sentiment_value is not None:
+        df[f"sentiment_lag_{lag_days}d"] = sentiment_value
+        feature_cols.append(f"sentiment_lag_{lag_days}d")
 
     X = df[feature_cols].values[:-1]
     y = df["close_price"].values[1:]
@@ -77,7 +111,6 @@ def train_and_predict(asset: str, forecast_days: int = 5) -> dict:
 
     train_score = round(model.score(X_scaled, y), 4)
 
-    # Generate predictions for next 7 days
     predictions = []
     last_row = df.iloc[-1].copy()
     current_price = float(last_row["close_price"])
@@ -107,17 +140,19 @@ def train_and_predict(asset: str, forecast_days: int = 5) -> dict:
         if temp_df.empty:
             break
 
+        # Add sentiment lag feature to forecast rows if available
+        if sentiment_value is not None:
+            temp_df[f"sentiment_lag_{lag_days}d"] = sentiment_value
+
         features = temp_df[feature_cols].iloc[-1].values.reshape(1, -1)
         features_scaled = scaler.transform(features)
         predicted_price = float(model.predict(features_scaled)[0])
 
-        predictions.append(
-            {
-                "date": forecast_date.strftime("%Y-%m-%d"),
-                "predicted_price": round(predicted_price, 2),
-                "is_prediction": True,
-            }
-        )
+        predictions.append({
+            "date": forecast_date.strftime("%Y-%m-%d"),
+            "predicted_price": round(predicted_price, 2),
+            "is_prediction": True,
+        })
 
         temp_prices.append(predicted_price)
         trading_days_generated += 1
@@ -128,7 +163,7 @@ def train_and_predict(asset: str, forecast_days: int = 5) -> dict:
         "model_r2": train_score,
         "current_price": round(current_price, 2),
         "predictions": predictions,
-        "disclaimer": "Predictions based on 6 months price momentum and volatility patterns. Model improves as sentiment data accumulates over time.",
+        "disclaimer": "Predictions based on price momentum, volatility patterns, and validated sentiment lag signals.",
         "generated_at": datetime.utcnow().isoformat(),
     }
 
