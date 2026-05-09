@@ -163,7 +163,7 @@ def train_and_predict(asset: str, forecast_days: int = 5) -> dict:
         "model_r2": train_score,
         "current_price": round(current_price, 2),
         "predictions": predictions,
-        "disclaimer": "Predictions based on price momentum, volatility patterns, and validated sentiment lag signals.",
+        "disclaimer": "Predictions based on price momentum, volatility patterns, and validated sentiment lag signals. Model improves as sentiment data accumulates.",
         "generated_at": datetime.utcnow().isoformat(),
     }
 
