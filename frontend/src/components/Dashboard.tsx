@@ -197,7 +197,7 @@ export default function Dashboard({ assets, lastUpdated, onSelectAsset, onSelect
                             >
                                 <div
                                     onClick={() => onSelectAsset(asset.asset)}
-                                    className={`bg-gray-900 rounded-xl p-5 border-l-4 ${COLOR_CLASSES[asset.color]?.split(' ')[0]} cursor-pointer hover:bg-gray-800 transition-all`}
+                                    className={`bg-gray-900 rounded-xl p-5 border-l-4 h-full ${COLOR_CLASSES[asset.color]?.split(' ')[0]} cursor-pointer hover:bg-gray-800 transition-all`}
                                 >
                                     <div className="flex items-start justify-between mb-4">
                                         <div>
