@@ -2,9 +2,8 @@
 
 > Multi-agent financial news intelligence for commodity and equity risk analysis.
 
-[![Live Dashboard](https://img.shields.io/badge/Live%20Dashboard-View-blue)](https://market-intelligence-system-app.vercel.app)
-[![API](https://img.shields.io/badge/API-Live-green)](https://market-intelligence-system-tau.vercel.app)
-[![Pipeline](https://img.shields.io/badge/Pipeline-Every%2015%20min-orange)]()
+[![Live Dashboard](https://market-intelligence-system-app.vercel.app)
+[![API](https://market-intelligence-system-tau.vercel.app)
 
 ![Dashboard Screenshot](./screenshot.png)
 
