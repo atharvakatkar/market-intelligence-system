@@ -2,10 +2,11 @@
 
 > Multi-agent financial news intelligence for commodity and equity risk analysis.
 
-[![Live Dashboard](https://market-intelligence-system-app.vercel.app)
-[![API](https://market-intelligence-system-tau.vercel.app)
+[Live Dashboard](https://market-intelligence-system-app.vercel.app)
 
-![Dashboard Screenshot](./screenshot.png)
+[API](https://market-intelligence-system-tau.vercel.app)
+
+[Dashboard Screenshot](./screenshot.png)
 
 ---
 
