@@ -163,49 +163,37 @@ export default function Dashboard({
         style={{ zIndex: 1 }}
       >
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
-          {/* Left — title */}
-          <div>
-            <h1 className="text-3xl font-bold text-white">
-              Market Intelligence
-            </h1>
-            <p className="text-gray-400 mt-1">
-              Multi-agent sentiment and volatility analysis
-            </p>
-          </div>
-
-          {/* Centre — live clock */}
-          <div className="text-center">
-            <p className="text-lg font-mono font-semibold text-white">
-              {clockDisplay}
-            </p>
-            <p className="text-sm text-gray-400 mt-0.5">
-              {clockDay}
-              {publicHoliday ? `, ${publicHoliday}` : ""}
-            </p>
-          </div>
-
-          {/* Right — refresh controls */}
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-xs text-gray-500">Dashboard refreshed</p>
-              <p className="text-xs text-gray-400">{lastUpdated}</p>
-              {lastPipelineRun?.minutes_ago !== null && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Pipeline:{" "}
-                  {lastPipelineRun?.minutes_ago < 60
-                    ? `${lastPipelineRun?.minutes_ago}m ago`
-                    : `${Math.floor(lastPipelineRun?.minutes_ago / 60)}h ago`}
+        <div className="flex items-start justify-between mb-8">
+            {/* Left — title + clock */}
+            <div>
+                <h1 className="text-3xl font-bold text-white">Market Intelligence</h1>
+                <p className="text-sm text-gray-400 mt-1">
+                    {new Date().toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit', year: 'numeric' })}, {clockDay}
+                    {publicHoliday ? ` · ${publicHoliday}` : ''}
                 </p>
-              )}
+                <p className="text-lg font-mono font-semibold text-white mt-0.5">{clockDisplay}</p>
             </div>
-            <button
-              onClick={onRefresh}
-              className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
-            >
-              <RefreshCw className="w-5 h-5 text-gray-400" />
-            </button>
-          </div>
+
+            {/* Right — refresh info */}
+            <div className="flex items-center gap-3">
+                <div className="text-right">
+                    <p className="text-xs text-gray-500">Dashboard refreshed</p>
+                    <p className="text-xs text-gray-400">{lastUpdated}</p>
+                    {lastPipelineRun?.minutes_ago !== null && (
+                        <p className="text-xs text-gray-500 mt-1">
+                            Pipeline: {lastPipelineRun?.minutes_ago < 60
+                                ? `${lastPipelineRun?.minutes_ago}m ago`
+                                : `${Math.floor(lastPipelineRun?.minutes_ago / 60)}h ago`}
+                        </p>
+                    )}
+                </div>
+                <button
+                    onClick={onRefresh}
+                    className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                >
+                    <RefreshCw className="w-5 h-5 text-gray-400" />
+                </button>
+            </div>
         </div>
 
         {/* Overall Risk Banner */}
