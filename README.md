@@ -172,6 +172,6 @@ REACT_APP_GROQ_API_KEY=your_groq_key
 
 ## Contact
 
-**Atharva Katkar** - Macquarie University
-Data Science & Statistical Modelling
+**Atharva Katkar**
+
 [LinkedIn](https://www.linkedin.com/in/ankatkar/)
