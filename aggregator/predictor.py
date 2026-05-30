@@ -11,7 +11,7 @@ SENTIMENT_LAG_DAYS = {
     "silver": 4,
     "oil": 2,
     "asx200": 1,
-    "audinr": None,
+    "audinr": 0,
 }
 
 
