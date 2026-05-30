@@ -145,8 +145,8 @@ def get_asset(asset_name: str, days: int = 30):
         return {
             "asset": asset_name,
             "volatility": {
-                "score": float(vol[0]) if vol else None,
-                "level": vol[1] if vol else None,
+                "volatility_score": float(vol[0]) if vol else None,
+                "volatility_level": vol[1] if vol else None,
                 "color": vol[2] if vol else None,
                 "latest_price": float(vol[3]) if vol else None,
                 "sentiment_score": float(vol[4]) if vol else None,
