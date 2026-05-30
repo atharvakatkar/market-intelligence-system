@@ -6,7 +6,7 @@
 
 [API](https://market-intelligence-system-tau.vercel.app)
 
-[Dashboard Screenshot](./Screenshot.png)
+![Dashboard Screenshot](./Screenshot.png)
 
 ---
 
