@@ -1,139 +1,177 @@
 # Market Intelligence System
 
-A multi-agent AI system that tracks real-time sentiment across financial news sources and combines it with historical price data to produce volatility risk signals for Gold, Silver, Crude Oil, and ASX200.
+> Multi-agent financial news intelligence for commodity and equity risk analysis.
 
-**Live Dashboard:** https://market-intelligence-system-app.vercel.app  
-**Live API:** https://market-intelligence-system-tau.vercel.app/docs
+[![Live Dashboard](https://img.shields.io/badge/Live%20Dashboard-View-blue)](https://market-intelligence-system-app.vercel.app)
+[![API](https://img.shields.io/badge/API-Live-green)](https://market-intelligence-system-tau.vercel.app)
+[![Pipeline](https://img.shields.io/badge/Pipeline-Every%2015%20min-orange)]()
 
----
-
-## Business Problem
-
-Market volatility is driven by two forces: price movements and narratives. Most tools track only prices. This system tracks both — scraping financial news from 6 specialist sources every 30 minutes, analysing sentiment using FinBERT, and combining it with price momentum to produce asset-specific volatility signals.
-
-Framed for: banking risk teams, commodity trading desks, and fintech analysts who need an early warning indicator for market volatility — not a price prediction engine.
+![Dashboard Screenshot](./screenshot.png)
 
 ---
 
-## Key Findings
+## What It Does
 
-- **ASX200 and Silver** consistently show the highest sentiment-driven volatility during the Iran war period (March 2026), reflecting cross-asset contagion from energy supply disruption
-- **Oil sentiment** is overwhelmingly negative (45-55%) driven by Hormuz blockade headlines, yet price momentum remains positive — a divergence signal indicating supply fear is not yet fully priced in
-- **Gold** shows safe-haven demand patterns — negative sentiment correlates with price rises, consistent with flight-to-quality behaviour during geopolitical stress
-- **Lag analysis** (accumulating — requires 10+ days of data) will quantify how many days sentiment precedes price movement per asset
+Financial market volatility is driven by prices **and** narratives. This system tracks both.
+
+- Scrapes 10+ financial news sources every 15 minutes via specialised agents
+- Runs **FinBERT** sentiment analysis with a two-layer relevance filter (keyword + semantic)
+- Combines sentiment signals with price momentum to produce asset-specific volatility risk scores
+- Generates 5-day price forecasts using linear regression with validated sentiment lag features
+- Delivers everything through a live React dashboard with AI-generated plain English analysis
+
+**Target use case:** Banking risk teams, commodity trading desks, FX transfer timing.
+
+---
+
+## Assets Tracked
+
+| Asset | Ticker | Sources |
+|---|---|---|
+| Gold | GC=F | Kitco, CNBC, BBC, FT, MarketWatch, RBA |
+| Silver | SI=F | Kitco, CNBC, BBC, FT, MarketWatch |
+| Crude Oil | CL=F | OilPrice.com, CNBC, BBC, FT, MarketWatch |
+| ASX 200 | ^AXJO | RBA, CNBC, BBC, FT, MarketWatch |
+| AUD/INR | AUDINR=X | ForexLive, FXStreet, Economic Times, Business Standard, Mint, Hindustan Times |
 
 ---
 
 ## Architecture
 ```
-NEWS SOURCES        SPECIALIST AGENTS       PIPELINE
-────────────        ─────────────────       ────────────────────
-OilPrice.com   →    Oil Agent          →
-Kitco          →    Commodities Agent  →    Keyword + Semantic
-CNBC x3        →    News Agent         →    Relevance Filter
-BBC Business   →                       →
-RBA            →    Banking Agent      →    FinBERT Sentiment
-FT/MarketWatch →    Macro Agent        →    Analysis
-                                       →
-Yahoo Finance  →    Price Agent        →    Volatility Aggregator
-                                       ↓
-                                  Supabase PostgreSQL
-                                       ↓
-                                  FastAPI (Vercel)
-                                       ↓
-                             React + Tailwind Dashboard
+NEWS SOURCES          SPECIALIST AGENTS        PIPELINE
+────────────          ─────────────────        ──────────────────────
+OilPrice.com     →    Oil Agent           →
+Kitco            →    Commodities Agent   →    Two-Layer Relevance Filter
+CNBC / BBC       →    News Agent          →    (Keyword 40% + Semantic 60%)
+RBA              →    Banking Agent       →
+FT / MarketWatch →    Macro Agent         →    FinBERT Sentiment Analysis
+ET / FXStreet    →    India/FX Agent      →
+→    Volatility Aggregator
+Yahoo Finance    →    Price Agent         →    (Sentiment 40% + Momentum 35% + Trend 25%)
+↓
+Supabase PostgreSQL
+↓
+FastAPI (Vercel)
+↓
+React + Tailwind Dashboard
 ```
-
-Pipeline runs every 30 minutes via GitHub Actions — zero cost, no infrastructure to maintain.
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Sentiment Model | FinBERT (ProsusAI) via HuggingFace |
-| Semantic Relevance | sentence-transformers (all-MiniLM-L6-v2) |
-| Price Data | Yahoo Finance API (yfinance) |
-| Backend | FastAPI |
-| Database | PostgreSQL (Supabase) |
-| Frontend | React + Tailwind CSS |
-| Scheduling | GitHub Actions (cron) |
-| Deployment | Vercel (API + Frontend) |
+| Layer | Technology | Reason |
+|---|---|---|
+| Sentiment | FinBERT | Trained on financial text — outperforms generic NLP on market language |
+| Relevance | sentence-transformers (all-MiniLM-L6-v2) | Catches cross-asset signals keywords miss |
+| Predictions | Linear Regression | Explainability — banking requires auditable model decisions |
+| Database | Supabase (PostgreSQL) | Free forever, no expiry unlike Render |
+| Backend | FastAPI (main_lite.py) | Vercel Lambda 500MB limit — ML models run in GitHub Actions only |
+| Frontend | React + Tailwind + Recharts | — |
+| Scheduler | GitHub Actions (cron every 15 min) | Free forever, no infrastructure to maintain |
+| AI Analysis | Groq (llama-3.3-70b-versatile) | Sub-second inference for live dashboard analysis |
 
 ---
 
-## Relevance Scoring
+## Key Technical Decisions
 
-A two-layer relevance system filters headlines before sentiment analysis:
+**Why FinBERT over VADER or TextBlob?**
+Generic sentiment models misclassify financial language. "The company beat earnings" scores neutral on VADER — FinBERT correctly identifies it as positive.
 
-**Keyword matching (40% weight):** Asset-specific keyword dictionaries score each headline. "Saudi oil exports fall" scores 1.0 for oil, 0.0 for silver.
+**Why a two-layer relevance filter?**
+Keywords catch hard zeros (completely irrelevant headlines). Semantic similarity catches nuanced cross-asset signals — "Hormuz blockade" triggers gold relevance via safe-haven reasoning even without the word "gold". Neither layer alone is sufficient.
 
-**Semantic similarity (60% weight):** sentence-transformers converts headlines and asset descriptions into vectors. Cosine similarity catches nuanced cross-asset signals that keywords miss — "Hormuz blockade" triggers gold relevance via safe-haven reasoning even without the word "gold."
+**Why linear regression for predictions?**
+In banking, model decisions need to be auditable. A linear model's coefficients directly show which features drive the forecast. This is a regulatory consideration, not just a technical preference.
 
-Combined threshold: 0.35. Below this, headlines are filtered before reaching FinBERT.
+**Why sentiment lag validation before using sentiment as a prediction feature?**
+The lag analysis component accumulates sentiment-to-price correlation data per asset. Sentiment only feeds price predictions once the lag is empirically validated — adding weak signals to a high R² model risks overfitting on limited data.
+
+---
+
+## Prediction Model — R² Scores
+
+| Asset | R² | Sentiment Lag Used |
+|---|---|---|
+| Gold | 0.93 | 4-day lag |
+| Silver | 0.89 | 4-day lag |
+| Crude Oil | 0.97 | 2-day lag |
+| ASX 200 | 0.82 | 1-day lag |
+| AUD/INR | 0.97 | Same-day (0-day lag) |
 
 ---
 
 ## Volatility Scoring
 
-Each asset receives a volatility score (0-1) combining three signals:
+Three signals combined per asset each pipeline run:
 
-| Signal | Weight | Description |
+| Signal | Weight | Calculation |
 |---|---|---|
 | Sentiment score | 40% | Negative headline % from last 24 hours |
-| Price momentum | 35% | 30-day price trend direction |
+| Price momentum | 35% | (avg last 5 days − avg first 5 days) / avg first 5 days |
 | Sentiment trend | 25% | Is negativity increasing over last 7 days? |
 
-Output levels: LOW (green) / MEDIUM (yellow) / HIGH (orange) / CRITICAL (red)
+Risk levels: LOW (0–35%) · MEDIUM (35–50%) · HIGH (50–65%) · CRITICAL (65%+)
 
 ---
 
-## Price Prediction
+## Zero Cost Stack
 
-10-day price forecasts generated using Linear Regression on 6 months of historical price data. Features: 1/5/10-day returns, 7/21-day moving averages, rolling volatility, MA ratio.
-
-Model R²: 0.85-0.97 across assets.
-
-Predictions are stored at generation time and compared against actual prices as each date passes — enabling ongoing accuracy tracking.
-
-**Disclaimer:** Predictions are based on price momentum patterns. This system's value is as a volatility early warning indicator, not a price prediction engine. Reliable directional prediction requires macro data, order flow, and cross-asset signals beyond NLP scope.
-
----
-
-## Data Sources
-
-| Source | Domain | Assets |
-|---|---|---|
-| Kitco | Precious metals specialist | Gold, Silver |
-| OilPrice.com | Energy specialist | Oil |
-| CNBC (Markets, Economy, Finance feeds) | Broad financial | All |
-| BBC Business | International macro | All |
-| RBA communications | Australian monetary policy | ASX200, Gold |
-| Financial Times + MarketWatch | High quality macro analysis | All |
-| Yahoo Finance | Historical prices | All |
-
----
-
-## Database Schema
-
-6 PostgreSQL tables: `asset_prices`, `headlines`, `sentiment_scores`, `asset_sentiment_summary`, `volatility_scores`, `price_predictions`
+Every component runs permanently for free — no expiring free tiers, no infrastructure costs.
+```
+Supabase    → PostgreSQL database (free forever, 500MB)
+Vercel      → FastAPI API + React frontend (free forever)
+GitHub Actions → Pipeline scheduler every 15 min (free forever)
+```
 
 ---
 
 ## Honest Limitations
 
-- Sentiment is one signal — this system flags volatility risk, it does not predict prices reliably
-- FinBERT scores headlines individually — cross-headline narrative trends require aggregation over time (improving as data accumulates)
-- Lag analysis requires 10+ days of sentiment history to produce reliable correlations
-- Price predictions are momentum-based — they do not incorporate order flow, macro data, or cross-asset signals
+- Sentiment is one signal — this system flags elevated volatility risk, it does not reliably predict price direction
+- Reliable directional prediction requires order flow, macro data, and cross-asset signals beyond NLP scope
+- Lag correlations are currently 0.23–0.38 — moderate, will strengthen as data accumulates beyond 6 months
+- HTML-scraped sources (Kitco, OilPrice) have null publication timestamps — not fabricated, left honest
 
 ---
 
 ## Iteration 2 Roadmap
 
-- Regime detection — war period vs stable period sentiment weighting
+- Regime detection — war/crisis period vs stable period sentiment weighting
 - Backtesting framework — historical sentiment vs historical prices
-- SHAP explainability on volatility aggregator
-- Incorporation of macro indicators (CPI, yield curves, PMI)
-- AUD/USD as a tracked asset
+- SHAP explainability on the volatility aggregator
+- Macro indicators — CPI, yield curves, PMI as additional features
+- Stronger lag correlations as prediction features once 6-month data threshold is reached
+
+---
+
+## Local Development
+
+```bash
+# Setup
+cd ~/personal_projects/market-intelligence-system
+source .venv/bin/activate
+
+# Run full pipeline once
+python pipeline_runner.py
+
+# Start local API
+uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+
+# Start frontend
+cd frontend && npm start
+```
+
+**Environment variables required:**
+```
+DATABASE_URL=postgresql://[user]:[password]@[host]:6543/postgres
+REACT_APP_GROQ_API_KEY=your_groq_key
+```
+
+---
+
+## Contact
+
+**Atharva Katkar** - Macquarie University
+Data Science & Statistical Modelling
+[LinkedIn](https://www.linkedin.com/in/ankatkar/)
