@@ -167,15 +167,14 @@ export default function Dashboard({
             {/* Left — title + clock */}
             <div>
                 <h1 className="text-3xl font-bold text-white">Market Intelligence</h1>
-                <p className="text-sm text-gray-400 mt-1">
-                    {new Date().toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit', year: 'numeric' })}, {clockDay}
-                    {publicHoliday ? ` · ${publicHoliday}` : ''}
+                <p className="text-sm text-gray-400 mt-1">{clockDisplay}</p>
+                <p className="text-sm text-gray-500 mt-0.5">
+                    {clockDay}{publicHoliday ? `, ${publicHoliday}` : ''}
                 </p>
-                <p className="text-lg font-mono font-semibold text-white mt-0.5">{clockDisplay}</p>
             </div>
 
-            {/* Right — refresh info */}
-            <div className="flex items-center gap-3">
+            {/* Right — refresh info, pushed down to align with clock */}
+            <div className="flex items-center gap-3 mt-8">
                 <div className="text-right">
                     <p className="text-xs text-gray-500">Dashboard refreshed</p>
                     <p className="text-xs text-gray-400">{lastUpdated}</p>
