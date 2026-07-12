@@ -253,18 +253,18 @@ export default function AssetDetail({ assetName, apiUrl, onBack, audRate }: Asse
                     {/* Volatility Score */}
                     <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
                         <p className="text-xs text-gray-500 mb-1">Volatility Score</p>
-                        <p className="text-xl font-bold text-white">{(vol.score * 100).toFixed(1)}%</p>
+                        <p className="text-xl font-bold text-white">{(vol.volatility_score * 100).toFixed(1)}%</p>
                         <p className="text-xs text-gray-500 mt-1">
-                            {vol.score < 0.35 ? 'Low market stress — conditions stable'
-                            : vol.score < 0.50 ? 'Moderate stress — monitor closely'
-                            : vol.score < 0.65 ? 'Elevated stress — high risk environment'
+                            {vol.volatility_score < 0.35 ? 'Low market stress — conditions stable'
+                            : vol.volatility_score < 0.50 ? 'Moderate stress — monitor closely'
+                            : vol.volatility_score < 0.65 ? 'Elevated stress — high risk environment'
                             : 'Critical stress — extreme risk conditions'}
                         </p>
                     </div>
                     {/* Risk Level */}
                     <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
                         <p className="text-xs text-gray-500 mb-1">Risk Level</p>
-                        <p className="text-xl font-bold text-white">{vol.level}</p>
+                        <p className="text-xl font-bold text-white">{vol.volatility_level}</p>
                     </div>
                     {/* Sentiment Score */}
                     <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
